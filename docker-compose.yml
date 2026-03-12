@@ -1,0 +1,35 @@
+services:
+  app:
+    build: .
+    container_name: revivepropertyco
+    restart: unless-stopped
+    environment:
+      - API_URL=https://api.z.ai/api/coding/paas/v4
+      - API_KEY=70f80ec6e2904f14bc93e6bc40f48338.9OZMUYo3ET2EYxRn
+
+    networks:
+      - homelab_web
+      - traefik-public
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+
+      # HTTP -> HTTPS redirect
+      - "traefik.http.routers.revivepropertyco-http.rule=Host(`revivepropertyco.au`)"
+      - "traefik.http.routers.revivepropertyco-http.entrypoints=web"
+      - "traefik.http.routers.revivepropertyco-http.middlewares=redirect-to-https"
+
+      # HTTPS router
+      - "traefik.http.routers.revivepropertyco.rule=Host(`revivepropertyco.au`)"
+      - "traefik.http.routers.revivepropertyco.entrypoints=websecure"
+      - "traefik.http.routers.revivepropertyco.tls.certresolver=cloudflare"
+
+      # Service
+      - "traefik.http.services.revivepropertyco.loadbalancer.server.port=80"
+
+networks:
+  homelab_web:
+    external: true
+  traefik-public:
+    external: true

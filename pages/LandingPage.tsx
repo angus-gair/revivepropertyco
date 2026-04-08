@@ -263,6 +263,25 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* CTA: Tighter vertical footprint */}
+      <section className="bg-white py-12 border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-[9px] font-black uppercase tracking-[0.5em] text-[#36453B]">Primary Service Areas</div>
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <span>Braddon</span>
+              <span>Kingston</span>
+              <span>Griffith</span>
+              <span>Hughes</span>
+              <span>Deakin</span>
+              <span>Woden Valley</span>
+              <span>Yarralumla</span>
+              <span>O'connor</span>
+              <span className="text-[#36453B]">Rest of ACT by Availability</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="bg-[#121212] py-20 relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <h2 className="text-4xl sm:text-6xl font-black text-white uppercase tracking-tighter leading-tight mb-8">Secure Your Slot.</h2>

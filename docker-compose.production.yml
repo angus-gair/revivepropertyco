@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: revivepropertyco
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - DATABASE_URL=postgresql://homelab:BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg@postgres:5432/revivepropertyco
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM=no-reply@revivepropertyco.au
+      - ADMIN_EMAIL_1=angus@gair.com.au
+      - ADMIN_EMAIL_2=angusjames@gair.com.au
+      - ADMIN_EMAIL_3=angus@ajinsights.com.au
+      - JWT_SECRET=${JWT_SECRET}
+      - GLM_API_URL=https://open.bigmodel.cn/api/paas/v4/chat/completions
+      - GLM_API_KEY=${GLM_API_KEY}
+    networks:
+      - traefik-public
+      - homelab_internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.revive-final.rule=Host(`revivepropertyco.au`) || Host(`revivepropertyco.ajinsights.com.au`)"
+      - "traefik.http.routers.revive-final.entrypoints=websecure"
+      - "traefik.http.routers.revive-final.tls=true"
+      - "traefik.http.routers.revive-final.tls.certresolver=letsencrypt"
+      - "traefik.http.services.revive-final.loadbalancer.server.port=80"
+
+networks:
+  traefik-public:
+    external: true
+  homelab_internal:
+    external: true

@@ -1,0 +1,115 @@
+# Multi-stage production build for Revive Property Co
+# Includes both frontend (React + Vite) and backend (Express + PostgreSQL)
+
+# ========================================
+# Stage 1: Dependencies
+# ========================================
+FROM node:20-alpine AS deps
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY package-lock.json* ./
+
+RUN npm ci
+
+# ========================================
+# Stage 2: Build Backend
+# ========================================
+FROM node:20-alpine AS backend-builder
+
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY package*.json ./
+COPY server ./server
+
+# Backend doesn't need build - just copy
+# The Node.js runtime will handle it directly
+
+# ========================================
+# Stage 3: Build Frontend
+# ========================================
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY package*.json ./
+COPY . .
+
+RUN npm run build
+
+# ========================================
+# Stage 4: Production Image
+# ========================================
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# Install production dependencies
+COPY --from=deps /app/node_modules ./node_modules
+COPY package*.json ./
+
+# Copy backend
+COPY --from=backend-builder /app/server ./server
+
+# Copy built frontend
+COPY --from=frontend-builder /app/dist ./dist
+
+# Create startup script that runs both backend and serves frontend
+RUN echo '#!/bin/sh' > entrypoint.sh && \
+    echo 'set -e' >> entrypoint.sh && \
+    echo '' >> entrypoint.sh && \
+    echo '# Start backend server in background' >> entrypoint.sh && \
+    echo 'node server/index.cjs &' >> entrypoint.sh && \
+    echo '' >> entrypoint.sh && \
+    echo '# Wait for backend to start' >> entrypoint.sh && \
+    echo 'sleep 5' >> entrypoint.sh && \
+    echo '' >> entrypoint.sh && \
+    echo '# Serve frontend with nginx' >> entrypoint.sh && \
+    echo 'nginx -g "daemon off;" -c /etc/nginx/nginx.conf' >> entrypoint.sh && \
+    chmod +x entrypoint.sh
+
+EXPOSE 80 8080
+
+# Install nginx for frontend serving
+RUN apk add --no-cache nginx
+
+# Configure nginx for SPA routing
+RUN echo 'events { worker_connections 1024; }' > /etc/nginx/nginx.conf && \
+    echo 'http {' >> /etc/nginx/nginx.conf && \
+    echo '    include /etc/nginx/mime.types;' >> /etc/nginx/nginx.conf && \
+    echo '    server {' >> /etc/nginx/nginx.conf && \
+    echo '        listen 80;' >> /etc/nginx/nginx.conf && \
+    echo '        server_name localhost;' >> /etc/nginx/nginx.conf && \
+    echo '        root /app/dist;' >> /etc/nginx/nginx.conf && \
+    echo '        index index.html;' >> /etc/nginx/nginx.conf && \
+    echo '        location / {' >> /etc/nginx/nginx.conf && \
+    echo '            try_files $uri $uri/ /index.html;' >> /etc/nginx/nginx.conf && \
+    echo '        }' >> /etc/nginx/nginx.conf && \
+    echo '        location /api/ {' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_pass http://localhost:8080;' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_http_version 1.1;' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_set_header Host $host;' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_set_header X-Real-IP $remote_addr;' >> /etc/nginx/nginx.conf && \
+    echo '        }' >> /etc/nginx/nginx.conf && \
+    echo '        location /health {' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_pass http://localhost:8080;' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_http_version 1.1;' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_set_header Host $host;' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_set_header X-Real-IP $remote_addr;' >> /etc/nginx/nginx.conf && \
+    echo '        }' >> /etc/nginx/nginx.conf && \
+
+    echo '        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {' >> /etc/nginx/nginx.conf && \
+    echo '            expires 1y;' >> /etc/nginx/nginx.conf && \
+    echo '            add_header Cache-Control "public, immutable";' >> /etc/nginx/nginx.conf && \
+    echo '        }' >> /etc/nginx/nginx.conf && \
+    echo '        error_page 502 503 504 /50x.html;' >> /etc/nginx/nginx.conf && \
+    echo '    }' >> /etc/nginx/nginx.conf && \
+    echo '}' >> /etc/nginx/nginx.conf
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:80/health || exit 1
+
+CMD ["sh", "entrypoint.sh"]

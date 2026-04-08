@@ -94,7 +94,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <h3 className="text-3xl font-black uppercase tracking-[0.2em] leading-none">Revive <br /><span className="text-slate-500">Property Co.</span></h3>
               </div>
               <p className="text-sm leading-relaxed text-slate-500 max-w-sm font-medium italic mb-10">
-                "Technical trade specialists serving the Eastern Suburbs corridor since inception."
+                "Technical trade specialists serving Canberra and the ACT corridor since inception."
               </p>
               <ThemedSocials />
             </div>
@@ -112,14 +112,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <ul className="space-y-6 text-[11px] font-bold uppercase tracking-[0.3em] text-slate-400">
                 <li className="flex items-center gap-4">02 8201 3710</li>
                 <li className="flex items-center gap-4">angus@gair.com.au</li>
-                <li className="text-slate-600 mt-10">Randwick Base Matrix</li>
+                <li className="text-slate-600 mt-10">Canberra Base Matrix</li>
               </ul>
             </div>
           </div>
           
           <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
             <p className="text-[9px] font-bold text-slate-600 uppercase tracking-[0.5em]">
-              &copy; {new Date().getFullYear()} Revive Property Co. Eastern Suburbs.
+              &copy; {new Date().getFullYear()} Revive Property Co. Canberra.
             </p>
             <div className="flex gap-10 text-[9px] font-black uppercase tracking-[0.5em] text-slate-600">
               <Link to="/admin" className="hover:text-white transition-colors">Internal Matrix</Link>

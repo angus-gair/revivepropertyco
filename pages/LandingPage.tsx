@@ -145,7 +145,7 @@ const LandingPage: React.FC = () => {
   const services = [
     { title: 'Pressure Washing', description: 'Industrial restoration of stone and concrete.', type: 'pressure', link: '/pressure-washing' },
     { title: 'Epoxy Grouting', description: 'Precision tile restoration and waterproof sealing.', type: 'grout', link: '/regrouting' },
-    { title: 'Estate Management', description: 'Curated maintenance for premium Sydney properties.', type: 'garden', link: '/garden-maintenance' },
+    { title: 'Estate Management', description: 'Curated maintenance for premium Canberra properties.', type: 'garden', link: '/garden-maintenance' },
     { title: 'Pool Hydraulics', description: 'Technical water chemistry and filtration optimization.', type: 'pool', link: '/pool-maintenance' },
   ];
 
@@ -159,13 +159,13 @@ const LandingPage: React.FC = () => {
           <div className="lg:col-span-8 flex flex-col justify-center py-12 lg:py-20 pr-0 lg:pr-10 z-10">
             <div className="flex items-center space-x-5 mb-8">
               <span className="w-12 h-px bg-[#36453B]"></span>
-              <span className="text-[9px] font-black uppercase tracking-[0.5em] text-[#36453B]">Sydney's Technical Authority</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.5em] text-[#36453B]">Canberra's Technical Authority</span>
             </div>
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-[#121212] tracking-tighter leading-[0.85] uppercase mb-10">
               Technical <br />Maintenance.
             </h1>
             <p className="text-base text-slate-500 max-w-lg font-medium leading-relaxed mb-12">
-              Architectural-grade restoration for the Eastern Suburbs. We specialize in precision execution for pressure washing, epoxy regrouting, and estate care.
+              Architectural-grade restoration for Canberra and the ACT. We specialize in precision execution for pressure washing, epoxy regrouting, and estate care.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/book" className="bg-[#121212] text-white px-10 py-6 text-[10px] font-black uppercase tracking-[0.4em] hover:bg-[#36453B] transition-all text-center rounded-none shadow-lg">Schedule Assessment</Link>
@@ -174,7 +174,7 @@ const LandingPage: React.FC = () => {
           </div>
           
           <div className="lg:col-span-4 relative h-[30vh] lg:h-auto overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=90" alt="Sydney Modern Residence" className="w-full h-full object-cover grayscale-[0.2]" />
+            <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=90" alt="Canberra Modern Residence" className="w-full h-full object-cover grayscale-[0.2]" />
             <div className="absolute inset-0 bg-[#36453B]/5 mix-blend-overlay"></div>
           </div>
         </div>
@@ -226,7 +226,7 @@ const LandingPage: React.FC = () => {
                    Angus directs all on-site operations and manages the client journey, ensuring every job meets our rigorous standards from your first quote to final delivery.
                  </p>
                  <p>
-                   Together with his three boys—James, Finn, and Archie—Angus is building a business rooted in trust, reliability, and the vibrant community spirit of Sydney's Eastern Suburbs.
+                   Together with his three boys—James, Finn, and Archie—Angus is building a business rooted in trust, reliability, and the vibrant community spirit of the Canberra region.
                  </p>
                </div>
 

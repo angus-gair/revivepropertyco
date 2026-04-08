@@ -89,3 +89,22 @@ export interface Campaign {
   audienceCount: number;
   lastSent?: number;
 }
+
+export enum QuoteStatus {
+  DRAFT = 'DRAFT',
+  SENT = 'SENT',
+  ACCEPTED = 'ACCEPTED',
+  REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED'
+}
+
+export interface Quote {
+  id: string;
+  leadId: string;
+  amount: number;
+  status: QuoteStatus;
+  validUntil?: string;
+  notes?: string;
+  createdAt?: string;
+  lead?: Lead;
+}

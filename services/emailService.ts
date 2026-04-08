@@ -31,7 +31,7 @@ export const sendConfirmationEmail = async (params: EmailParams): Promise<boolea
     A technical summary will be provided 24 hours prior to the window.
 
     Regards,
-    Revive Property Co. | Sydney Operations Matrix
+    Revive Property Co. | Canberra Operations Matrix
   `);
 
   // Simulate network latency of a mail server

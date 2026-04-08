@@ -59,7 +59,7 @@ const ServicePageTemplate: React.FC<ServicePageTemplateProps> = ({ hero, benefit
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-wrap justify-between gap-8 text-[9px] font-black uppercase tracking-[0.4em] text-[#36453B] opacity-60">
             <div className="flex items-center gap-3"><Shield className="w-4 h-4" /> ISO Standards</div>
-            <div className="flex items-center gap-3"><Star className="w-4 h-4" /> Eastern Suburbs Spec</div>
+            <div className="flex items-center gap-3"><Star className="w-4 h-4" /> Canberra & ACT Spec</div>
             <div className="flex items-center gap-3"><Clock className="w-4 h-4" /> 24hr Dispatch</div>
           </div>
         </div>

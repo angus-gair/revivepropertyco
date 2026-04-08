@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Lock } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+
+const API_BASE = import.meta.env.PROD
+  ? 'https://revivepropertyco.au'
+  : 'http://localhost:3001';
 
 const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -18,20 +23,30 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    if (!isSupabaseConfigured() || !supabase) {
-      setError("Supabase is not configured. Please set API keys.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        })
       });
 
-      if (error) throw error;
-      navigate(from, { replace: true });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to login");
+      }
+
+      if (data.success && data.token) {
+        signIn(data.token, data.user);
+        navigate(from, { replace: true });
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to login");
     } finally {
@@ -56,18 +71,17 @@ const LoginPage: React.FC = () => {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleLogin}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-                Email address
+              <label htmlFor="username" className="block text-sm font-medium text-slate-700">
+                Username
               </label>
               <div className="mt-1">
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
+                  id="username"
+                  name="username"
+                  type="text"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>

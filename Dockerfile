@@ -13,10 +13,6 @@ RUN npm install
 # Copy source code and static assets
 COPY . .
 
-# Copy static images
-COPY angus.png ./
-COPY family.png ./
-
 # Build the application
 RUN npm run build
 
@@ -25,10 +21,6 @@ FROM nginx:alpine
 
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy static images to nginx
-COPY --from=builder /app/angus.png /usr/share/nginx/html/
-COPY --from=builder /app/family.png /usr/share/nginx/html/
 
 # Copy custom nginx config for SPA routing
 RUN echo 'server { \

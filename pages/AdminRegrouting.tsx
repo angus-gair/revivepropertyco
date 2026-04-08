@@ -100,7 +100,7 @@ const AdminRegrouting: React.FC = () => {
               </h2>
               <div className="bg-white p-16 border border-slate-200 shadow-xl">
                 <p className="text-2xl text-slate-700 leading-relaxed font-medium mb-12">
-                  Regrouting is our <span className="text-[#121212] font-black italic">high-precision anchor service</span>. This guide defines the technical standard for all Sydney Eastern Suburbs operations.
+                  Regrouting is our <span className="text-[#121212] font-black italic">high-precision anchor service</span>. This guide defines the technical standard for all Canberra & ACT operations.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                    <div className="p-10 bg-[#F8F7F4] border border-slate-200 flex items-start gap-6">

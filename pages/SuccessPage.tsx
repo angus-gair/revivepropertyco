@@ -72,7 +72,7 @@ const SuccessPage: React.FC = () => {
                <div>
                  <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.3em] mb-2">Schedule Window</p>
                  <p className="font-black text-xl uppercase tracking-tight">{new Date(date || '').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</p>
-                 <p className="text-slate-400 font-bold text-sm uppercase tracking-[0.1em] mt-1">{time} Sydney</p>
+                 <p className="text-slate-400 font-bold text-sm uppercase tracking-[0.1em] mt-1">{time} Canberra</p>
                </div>
                <div>
                  <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.3em] mb-2">Technical Discipline</p>
@@ -116,7 +116,7 @@ const SuccessPage: React.FC = () => {
           <Link to="/" className="inline-block px-12 py-7 bg-[#121212] text-white text-[11px] font-black uppercase tracking-[0.5em] shadow-2xl hover:bg-[#36453B] transition-all rounded-none">
             Back to Dashboard <ArrowRight className="inline ml-4 w-4 h-4" />
           </Link>
-          <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.4em] italic uppercase">Revive Property Co. Sydney Operations</p>
+          <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.4em] italic uppercase">Revive Property Co. Canberra Operations</p>
         </div>
       </div>
     </div>

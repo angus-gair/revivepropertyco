@@ -6,7 +6,7 @@ import { Scissors, Sun, Leaf, Ruler } from 'lucide-react';
 const ServiceGardenMaintenance: React.FC = () => {
   const heroData = {
     title: "Curated Estate Management",
-    subtitle: "Architectural horticultural care for Sydney's premium residential gardens. We provide precision maintenance that respects the original landscape design intent.",
+    subtitle: "Architectural horticultural care for Canberra's premium residential gardens. We provide precision maintenance that respects the original landscape design intent.",
     image: "https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&q=80"
   };
 
@@ -35,7 +35,7 @@ const ServiceGardenMaintenance: React.FC = () => {
 
   const pricingData = {
     heading: "Management Frameworks",
-    description: "Regular scheduled maintenance is prioritized for Eastern Suburbs estates. One-off overhaul rates are available based on site assessment.",
+    description: "Regular scheduled maintenance is prioritized for Canberra and ACT estates. One-off overhaul rates are available based on site assessment.",
     tiers: [
       {
         name: 'THE PRECISION MOW',

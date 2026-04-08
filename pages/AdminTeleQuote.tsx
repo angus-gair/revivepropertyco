@@ -69,16 +69,16 @@ const AdminTeleQuote: React.FC = () => {
   const [hasApiKey, setHasApiKey] = useState(false);
   const [generatingPlatforms, setGeneratingPlatforms] = useState<Map<string, number>>(new Map());
   const [platformPrompts, setPlatformPrompts] = useState<Record<string, string>>({
-    zoom: "A high-definition Zoom call recording showing a technical property inspection in Randwick Sydney, professional technician pointing at tile detail, crystal clear lighting.",
-    teams: "A corporate Microsoft Teams video presentation of a large scale commercial pressure washing project in Sydney CBD, enterprise branding, professional grade video.",
-    google_meet: "A smooth Google Meet recording of a bathroom regrouting consultation, split screen showing technician and client, modern Sydney apartment aesthetic.",
-    whatsapp: "A casual but professional vertical video recorded for WhatsApp, showing a gardener explaining a landscape plan in a sunny Sydney backyard.",
-    messenger: "A vibrant and clear Facebook Messenger video chat showing a pool technician balancing water chemicals, bright summer lighting, clear Sydney pool."
+    zoom: "A high-definition Zoom call recording showing a technical property inspection in Canberra ACT, professional technician pointing at tile detail, crystal clear lighting.",
+    teams: "A corporate Microsoft Teams video presentation of a large scale commercial pressure washing project in Canberra CBD, enterprise branding, professional grade video.",
+    google_meet: "A smooth Google Meet recording of a bathroom regrouting consultation, split screen showing technician and client, modern Canberra apartment aesthetic.",
+    whatsapp: "A casual but professional vertical video recorded for WhatsApp, showing a gardener explaining a landscape plan in a sunny Canberra backyard.",
+    messenger: "A vibrant and clear Facebook Messenger video chat showing a pool technician balancing water chemicals, bright summer lighting, clear Canberra pool."
   });
   
   const [platformVideos, setPlatformVideos] = useState<Record<string, string>>({});
 
-  const [messengerPromoPrompt, setMessengerPromoPrompt] = useState("A high-impact Facebook Messenger service explanation video for Revive Property Co. Showcase a technician applying high-performance epoxy grout in a modern Sydney bathroom. Focus on the transformation from moldy to pristine. Cinematic 4K, professional aesthetic.");
+  const [messengerPromoPrompt, setMessengerPromoPrompt] = useState("A high-impact Facebook Messenger service explanation video for Revive Property Co. Showcase a technician applying high-performance epoxy grout in a modern Canberra bathroom. Focus on the transformation from moldy to pristine. Cinematic 4K, professional aesthetic.");
   const [isGeneratingMessengerPromo, setIsGeneratingMessengerPromo] = useState(false);
   const [messengerPromoProgress, setMessengerPromoProgress] = useState(0);
   

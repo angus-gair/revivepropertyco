@@ -32,7 +32,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard: React.FC = () => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
   
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -185,10 +185,18 @@ const AdminDashboard: React.FC = () => {
               System <br />Command.
             </h1>
             <p className="text-lg text-slate-500 font-medium leading-relaxed">
-              Sydney property management hub. Synchronizing lead pipelines, technical schedules, and operational logistics.
+              Canberra property management hub. Synchronizing lead pipelines, technical schedules, and operational logistics.
             </p>
           </div>
           <div className="flex items-center gap-4 bg-white p-2 border border-slate-200 shadow-sm flex-wrap">
+             <div className="px-6 py-3 border-r border-slate-100 flex items-center gap-3">
+                <div className="w-6 h-6 bg-[#36453B] rounded-full flex items-center justify-center text-[8px] font-black text-white uppercase">
+                  {user?.username?.charAt(0) || 'A'}
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">
+                  {user?.username || 'Operator'}
+                </span>
+             </div>
              {['leads', 'calendar', 'tasks', 'stats'].map((tab) => (
                 <button 
                   key={tab}
@@ -544,7 +552,7 @@ const AdminDashboard: React.FC = () => {
                    {[
                      { label: 'Lead Conversion Rate', value: '62%', color: 'bg-[#36453B]' },
                      { label: 'Booking Efficiency', value: '88%', color: 'bg-[#121212]' },
-                     { label: 'Sydney Market Share', value: '14%', color: 'bg-slate-300' }
+                     { label: 'ACT Market Share', value: '14%', color: 'bg-slate-300' }
                    ].map((stat, i) => (
                      <div key={i} className="space-y-4">
                         <div className="flex justify-between text-[11px] font-black uppercase tracking-widest">
@@ -563,7 +571,7 @@ const AdminDashboard: React.FC = () => {
                    Operational <br />Health Status.
                  </h4>
                  <p className="text-slate-400 text-sm font-medium leading-relaxed italic border-l-2 border-white/20 pl-8 mb-10">
-                   "Growth is stabilized within the Eastern Suburbs corridor. Strategic focus remains on technical service expansion and high-fidelity client retention."
+                   "Growth is stabilized within the Canberra & ACT corridor. Strategic focus remains on technical service expansion and high-fidelity client retention."
                  </p>
                  <button onClick={() => setActiveTab('leads')} className="bg-white text-[#121212] px-10 py-5 text-[10px] font-black uppercase tracking-[0.4em] hover:bg-[#36453B] hover:text-white transition-all rounded-none self-start">Review Live Pipeline</button>
                </div>

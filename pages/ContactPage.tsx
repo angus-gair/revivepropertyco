@@ -31,7 +31,7 @@ const ContactPage: React.FC = () => {
             </p>
           </div>
           <div className="text-[10px] font-black uppercase tracking-[0.5em] text-[#36453B] pb-2 border-b-2 border-[#36453B]">
-            Family Office / Sydney
+            Family Office / Canberra
           </div>
         </div>
 
@@ -80,7 +80,7 @@ const ContactPage: React.FC = () => {
                     <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.4em]">Operation Base</p>
                   </div>
                   <p className="text-xl font-black leading-tight uppercase tracking-tight">
-                    219 Rainbow Street,<br />RANDWICK NSW
+                    802/2 Marcus Clarke Street,<br />Canberra, ACT 2601
                   </p>
                </div>
                
@@ -91,7 +91,7 @@ const ContactPage: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <p className="text-xl font-black leading-tight uppercase tracking-tight">Mon - Fri: 07:00 - 17:00</p>
-                    <p className="text-sm font-medium text-slate-500">24/7 Emergency Response Available</p>
+                    <p className="text-sm font-medium text-slate-500">Serving Braddon, Kingston, Griffith, Deakin & surrounding ACT suburbs.</p>
                   </div>
                </div>
             </div>

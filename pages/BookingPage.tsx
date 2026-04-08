@@ -1,10 +1,9 @@
 import * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
-import { getAvailableSlots, bookAppointment, addLead } from '../services/crmService';
-import { sendConfirmationEmail } from '../services/emailService';
-import { ServiceType, LeadStatus, AppointmentType } from '../types';
+import { getAvailableSlots, submitBooking } from '../services/bookingApiService';
+import { ServiceType, AppointmentType } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, MapPin, Calendar, Clock, CheckCircle, ChevronLeft, ChevronRight, Video, ClipboardList, Loader2, ShieldCheck, ArrowRight, Info, Hash } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Clock, CheckCircle, ChevronLeft, ChevronRight, Video, ClipboardList, Loader2, ShieldCheck, ArrowRight, Info, Hash, AlertTriangle } from 'lucide-react';
 import CalendarPicker from '../components/CalendarPicker';
 import PlatformSelector from '../components/TeleQuote/PlatformSelector';
 import MediaUpload from '../components/TeleQuote/MediaUpload';
@@ -21,7 +20,8 @@ const BookingPage: React.FC = () => {
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [step, setStep] = useState<1 | 2>(1);
   const [isBooking, setIsBooking] = useState(false);
-  const [transmissionStatus, setTransmissionStatus] = useState<string>('');
+  const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
   
   const [bookingType, setBookingType] = useState<AppointmentType>('QUOTE');
   const [platformPreference, setPlatformPreference] = useState<string>('whatsapp');
@@ -44,6 +44,7 @@ const BookingPage: React.FC = () => {
   useEffect(() => {
     const fetchSlots = async () => {
         if (selectedDate) {
+            setAvailableSlots([]); // Clear while loading
             const slots = await getAvailableSlots(selectedDate);
             setAvailableSlots(slots);
         }
@@ -52,52 +53,47 @@ const BookingPage: React.FC = () => {
   }, [selectedDate]);
 
   const handleBook = async () => {
-    setIsBooking(true);
-    setTransmissionStatus('ARCHIVING LEAD DATA...');
-    
-    try {
-      const lead = await addLead({
-        ...formData,
-        status: LeadStatus.BOOKED,
-        platform_preference: bookingType === 'QUOTE' ? platformPreference : undefined
-      });
+    setSubmissionStatus('submitting');
+    setErrorMessage('');
 
-      setTransmissionStatus('SYNCHRONIZING CALENDAR...');
-      await bookAppointment({
-        leadId: lead.id,
+    try {
+      const result = await submitBooking({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
         serviceType: formData.serviceInterest,
-        type: bookingType,
         date: selectedDate,
         timeSlot: selectedSlot,
-        notes: formData.notes
+        type: bookingType,
+        notes: formData.notes,
+        platformPreference: bookingType === 'QUOTE' ? platformPreference : undefined
       });
 
-      setTransmissionStatus('TRANSMITTING RECEIPT...');
-      await sendConfirmationEmail({
-        to: formData.email,
-        firstName: formData.firstName,
-        serviceType: formData.serviceInterest,
-        date: selectedDate,
-        time: selectedSlot,
-        type: bookingType
-      });
-
-      localStorage.removeItem('revive_last_detected_service');
-      navigate('/success', {
-        state: {
-          type: 'booking',
-          firstName: formData.firstName,
-          email: formData.email,
-          date: selectedDate,
-          time: selectedSlot,
-          isQuote: bookingType === 'QUOTE',
-          serviceType: formData.serviceInterest
-        }
-      });
+      if (result.success && result.bookingReference) {
+        setSubmissionStatus('success');
+        localStorage.removeItem('revive_last_detected_service');
+        navigate('/success', {
+          state: {
+            type: 'booking',
+            firstName: formData.firstName,
+            email: formData.email,
+            date: selectedDate,
+            time: selectedSlot,
+            isQuote: bookingType === 'QUOTE',
+            serviceType: formData.serviceInterest,
+            bookingReference: result.bookingReference
+          }
+        });
+      } else {
+        setSubmissionStatus('error');
+        setErrorMessage(result.error || 'Failed to create booking. Please try again.');
+      }
     } catch (e) {
-      alert('Error initiating booking.');
-    } finally {
-        setIsBooking(false);
+      setSubmissionStatus('error');
+      setErrorMessage('Network error. Please check your connection and try again.');
+      console.error('Booking error:', e);
     }
   };
 
@@ -118,10 +114,21 @@ const BookingPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-px bg-slate-200 border border-slate-200 shadow-2xl relative">
-          {isBooking && (
+          {submissionStatus === 'submitting' && (
             <div className="absolute inset-0 bg-[#121212]/95 z-[60] flex flex-col items-center justify-center p-10 text-center text-white backdrop-blur-sm">
                <Loader2 className="w-12 h-12 text-[#36453B] animate-spin mb-6" />
-               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{transmissionStatus}</p>
+               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Processing your booking...</p>
+            </div>
+          )}
+
+          {submissionStatus === 'error' && (
+            <div className="absolute inset-0 bg-[#121212]/95 z-[60] flex flex-col items-center justify-center p-10 text-center text-white backdrop-blur-sm">
+               <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
+               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Booking Failed</p>
+               <p className="text-sm text-slate-300 max-w-md">{errorMessage}</p>
+               <button onClick={() => setSubmissionStatus('idle')} className="mt-4 px-6 py-2 bg-[#36453B] text-white uppercase font-black tracking-widest hover:bg-[#121212] transition-all">
+                 Try Again
+               </button>
             </div>
           )}
 
@@ -308,7 +315,7 @@ const BookingPage: React.FC = () => {
           </div>
         </div>
 
-        <p className="mt-8 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.6em]">ISO 9001 Management Protocol • Sydney 2024</p>
+        <p className="mt-8 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.6em]">ISO 9001 Management Protocol • Canberra 2026</p>
       </div>
     </div>
   );

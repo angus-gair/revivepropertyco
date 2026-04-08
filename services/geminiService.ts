@@ -1,6 +1,6 @@
 
-const API_URL = process.env.API_URL || 'https://api.z.ai/api/coding/paas/v4';
-const API_KEY = process.env.API_KEY || '70f80ec6e2904f14bc93e6bc40f48338.9OZMUYo3ET2EYxRn';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.z.ai/api/coding/paas/v4';
+const API_KEY = import.meta.env.VITE_API_KEY || '70f80ec6e2904f14bc93e6bc40f48338.9OZMUYo3ET2EYxRn';
 const MODEL = 'glm-4.7';
 
 interface ChatMessage {

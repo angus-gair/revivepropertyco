@@ -6,7 +6,7 @@ import { Home, Shield, Zap } from 'lucide-react';
 const ServicePressureWashing: React.FC = () => {
   const heroData = {
     title: "Precision Pressure Restoration",
-    subtitle: "High-spec cleaning for Sydney's elite residential facades. We utilize pharmaceutical-grade chemicals and low-pressure soft wash techniques to restore integrity.",
+    subtitle: "High-spec cleaning for Canberra's elite residential facades. We utilize pharmaceutical-grade chemicals and low-pressure soft wash techniques to restore integrity.",
     image: "https://images.unsplash.com/photo-1621252179027-94459d27d3ee?auto=format&fit=crop&q=80"
   };
 
@@ -35,7 +35,7 @@ const ServicePressureWashing: React.FC = () => {
 
   const pricingData = {
     heading: "Service Specifications",
-    description: "Pricing is calculated based on professional trade metrics for the Sydney region. Standard rates are estimates until site inspection.",
+    description: "Pricing is calculated based on professional trade metrics for the Canberra region. Standard rates are estimates until site inspection.",
     tiers: [
       {
         name: 'THE REFRESH',
@@ -66,7 +66,7 @@ const ServicePressureWashing: React.FC = () => {
       {
         name: 'THE FULL REVIVE',
         price: '$800+',
-        description: 'Complete exterior transformation for high-specification Sydney estates.',
+        description: 'Complete exterior transformation for high-specification Canberra estates.',
         features: [
           'FULL HOUSE SOFT WASH ENVELOPE',
           'ALL CONCRETE & STONE SURFACES',

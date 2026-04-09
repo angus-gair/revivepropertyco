@@ -2,6 +2,8 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Heart } from 'lucide-react';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { SEO } from '../seoConfig';
 
 // Technical Blueprint Icons
 const TechnicalIcon = ({ type }: { type: string }) => {
@@ -142,6 +144,7 @@ const AiImage = ({
 };
 
 const LandingPage: React.FC = () => {
+  usePageSEO(SEO.home);
   const services = [
     { title: 'Pressure Washing', description: 'Industrial restoration of stone and concrete.', type: 'pressure', link: '/pressure-washing' },
     { title: 'Epoxy Grouting', description: 'Precision tile restoration and waterproof sealing.', type: 'grout', link: '/regrouting' },
@@ -151,7 +154,9 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="bg-[#FDFCFB]">
-      
+      {/* SEO H1 - Hidden visually but present for search engines */}
+      <h1 className="sr-only">Premium Property Maintenance Canberra | Pressure Washing, Regrouting, Garden Care</h1>
+
       {/* Hero: Tighter Spacing & Compressed Height */}
       <section className="relative overflow-hidden bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 items-stretch min-h-[70vh]">
@@ -241,7 +246,7 @@ const LandingPage: React.FC = () => {
             {/* Imagery Grid */}
             <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-slate-100 overflow-hidden relative border border-[#121212]/10 shadow-sm group h-[400px] md:h-auto">
-                <img src="/angus.png" alt="Angus James Gair & Son" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
+                <img src="/angus.jpg" alt="Angus James Gair & Son" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/80 via-transparent to-transparent"></div>
                 <div className="absolute bottom-6 left-6 text-white w-full pr-6">
                   <p className="text-[8px] font-black text-[#36453B] bg-white px-2 py-1 inline-block uppercase tracking-[0.4em] mb-2 shadow-sm">Director & Co-Founder</p>
@@ -249,7 +254,7 @@ const LandingPage: React.FC = () => {
                 </div>
               </div>
               <div className="bg-slate-100 overflow-hidden relative border border-[#121212]/10 shadow-sm group h-[400px] md:h-auto">
-                 <img src="/family.png" alt="The Gair Family" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
+                 <img src="/family.jpg" alt="The Gair Family" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" loading="lazy" />
                  <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/80 via-transparent to-transparent"></div>
                  <div className="absolute bottom-6 left-6 text-white w-full pr-6">
                    <p className="text-[8px] font-black text-[#36453B] bg-white px-2 py-1 inline-block uppercase tracking-[0.4em] mb-2 shadow-sm">James, Finn & Archie</p>

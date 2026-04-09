@@ -1,6 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link, Navigate } from 'react-router-dom';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { SEO } from '../seoConfig';
 import { CheckCircle, Clock, ArrowRight, Video, ClipboardList, ShieldCheck, Mail, ExternalLink } from 'lucide-react';
 import { getLeads } from '../services/crmService';
 
@@ -15,6 +17,7 @@ interface SuccessState {
 }
 
 const SuccessPage: React.FC = () => {
+  usePageSEO({ ...SEO.success, noindex: true });
   const location = useLocation();
   const state = location.state as SuccessState;
   const [sessionId, setSessionId] = useState<string | null>(null);

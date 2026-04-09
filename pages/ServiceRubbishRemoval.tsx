@@ -1,12 +1,18 @@
 import React from 'react';
-import ServicePageTemplate, { Benefit, PricingTier, AddOn } from '../components/ServicePageTemplate';
+import ServicePageTemplate, { Benefit, PricingTier, AddOn, CrossLink } from '../components/ServicePageTemplate';
 import { Trash2, Truck, RefreshCw } from 'lucide-react';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { FAQSchema, ServiceSchema } from '../components/SEOSchemas';
+import { SEO } from '../seoConfig';
 
 const ServiceRubbishRemoval: React.FC = () => {
+  usePageSEO(SEO.rubbishRemoval);
+
   const heroData = {
     title: "Rubbish Removal & Decluttering",
     subtitle: "Got a pile of junk taking up space? We load it, haul it, and dispose of it responsibly so you never have to visit the tip.",
-    image: "https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?auto=format&fit=crop&q=80",
+    imageAlt: "Rubbish removal trailer loaded with green waste and household items in Canberra"
   };
 
   const benefitsData = {
@@ -95,13 +101,51 @@ const ServiceRubbishRemoval: React.FC = () => {
     }
   };
 
+  const faqs = [
+    { question: 'How much does rubbish removal cost in Canberra?', answer: 'Single item pickup (fridge, mattress, sofa) starts from $60-$80. A full trailer load is $180-$250.' },
+    { question: 'Can you remove green waste?', answer: 'Yes! We handle green waste, general household junk, furniture, and more. We sort recyclables and donate where possible.' },
+    { question: 'Do you do same-day rubbish removal in Canberra?', answer: 'Yes, same-day service is often available depending on our schedule. Call 02 8201 3710 to check availability.' },
+  ];
+
+  const crossLinks: CrossLink[] = [
+    {
+      title: 'Garden Maintenance',
+      description: 'Complete garden cleanups with green waste removal included.',
+      href: '/garden-maintenance'
+    },
+    {
+      title: 'Pressure Washing',
+      description: 'Clean up after rubbish removal with a thorough pressure wash.',
+      href: '/pressure-washing'
+    },
+    {
+      title: 'Book a Pickup',
+      description: 'Schedule rubbish removal at your convenience.',
+      href: '/book'
+    }
+  ];
+
   return (
-    <ServicePageTemplate 
-      hero={heroData}
-      benefits={benefitsData}
-      pricing={pricingData}
-      addOns={addOnsData}
-    />
+    <>
+      <FAQSchema faqs={faqs} />
+      <ServiceSchema
+        name="Rubbish Removal"
+        description="Fast, affordable rubbish removal in Canberra. Single items, trailer loads or full property clearouts. We load, haul and dispose responsibly. Same-day service available."
+        areaServed="Canberra, ACT"
+        priceRange="$60 - $450+"
+        url="https://revivepropertyco.au/rubbish-removal"
+      />
+      <ServicePageTemplate
+        hero={heroData}
+        benefits={benefitsData}
+        pricing={pricingData}
+        addOns={addOnsData}
+        seoH1="Rubbish Removal & Junk Collection Canberra"
+        aeoIntro="Fast rubbish removal in Canberra starts from $60 for single items. We load, haul, and dispose responsibly with same-day service available."
+        crossLinks={crossLinks}
+        faqs={faqs}
+      />
+    </>
   );
 };
 

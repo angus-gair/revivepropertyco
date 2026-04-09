@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
 import ContactPage from './pages/ContactPage';
@@ -18,9 +18,13 @@ import ChatWidget from './components/ChatWidget';
 import FloatingBackButton from './components/FloatingBackButton';
 import LoginPage from './pages/LoginPage';
 import TeleQuoteLobby from './pages/TeleQuoteLobby';
+import ReviewPage from './pages/ReviewPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
+import ServiceAreasPage from './pages/ServiceAreasPage';
+import ProjectsPage from './pages/ProjectsPage';
+import BlogPage from './pages/BlogPage';
 
 const App: React.FC = () => {
   return (
@@ -38,6 +42,10 @@ const App: React.FC = () => {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/book" element={<BookingPage />} />
             <Route path="/success" element={<SuccessPage />} />
+            <Route path="/review" element={<ReviewPage />} />
+            <Route path="/service-areas" element={<ServiceAreasPage />} />
+            <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/blog" element={<BlogPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/session/:id" element={<TeleQuoteLobby />} />
             <Route 

@@ -3,6 +3,8 @@ import * as React from 'react';
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getSessionById } from '../services/crmService';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { SEO } from '../seoConfig';
 import { Lead, TeleQuoteSession, Appointment } from '../types';
 import { 
   Video, 
@@ -22,6 +24,7 @@ import {
 
 const TeleQuoteLobby: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  usePageSEO({ ...SEO.telequoteSession, path: `/session/${id}`, noindex: true });
   const navigate = useNavigate();
   const [sessionData, setSessionData] = useState<{ session: TeleQuoteSession, lead: Lead, appointment?: Appointment } | null>(null);
   const [loading, setLoading] = useState(true);

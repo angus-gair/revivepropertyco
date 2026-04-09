@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Check, ArrowRight, Shield, Star, Clock, AlertCircle } from 'lucide-react';
+import FAQSection, { FAQItem } from './FAQSection';
 
 export interface PricingTier {
   name: string;
@@ -24,19 +25,41 @@ export interface AddOn {
   price: string;
 }
 
+export interface CrossLink {
+  title: string;
+  description: string;
+  href: string;
+}
+
 interface ServicePageTemplateProps {
-  hero: { title: string; subtitle: string; image: string; };
+  hero: { title: string; subtitle: string; image: string; imageAlt?: string; };
   benefits: { heading: string; subheading: string; description: string; items: Benefit[]; };
   pricing: { heading: string; description: string; tiers: PricingTier[]; };
   addOns: { items: AddOn[]; costInfo: { heading: string; description: string; points: string[]; }; };
+  seoH1?: string; // SEO-optimized H1 (can differ from visual heading)
+  crossLinks?: CrossLink[]; // Internal links to related services
+  faqs?: FAQItem[]; // FAQ items for visible section
+  aeoIntro?: string; // Answer Engine Optimisation intro paragraph
 }
 
-const ServicePageTemplate: React.FC<ServicePageTemplateProps> = ({ hero, benefits, pricing, addOns }) => {
+const ServicePageTemplate: React.FC<ServicePageTemplateProps> = ({
+  hero,
+  benefits,
+  pricing,
+  addOns,
+  seoH1,
+  crossLinks,
+  faqs,
+  aeoIntro
+}) => {
   return (
     <div className="bg-[#FDFCFB]">
+      {/* SEO H1 - Hidden visually but present for search engines */}
+      {seoH1 && <h1 className="sr-only">{seoH1}</h1>}
+
       {/* Hero: Compressed Height for better information flow */}
       <div className="relative min-h-[60vh] flex items-center overflow-hidden bg-[#121212]">
-        <img src={hero.image} alt={hero.title} className="absolute inset-0 w-full h-full object-cover filter brightness-[0.6] grayscale-[0.2]" />
+        <img src={hero.image} alt={hero.imageAlt || hero.title} className="absolute inset-0 w-full h-full object-cover filter brightness-[0.6] grayscale-[0.2]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#121212]/90 via-[#121212]/40 to-transparent" />
         <div className="max-w-7xl mx-auto px-6 w-full relative z-10 py-16 lg:py-24">
           <div className="max-w-3xl">
@@ -44,7 +67,7 @@ const ServicePageTemplate: React.FC<ServicePageTemplateProps> = ({ hero, benefit
               <span className="w-12 h-px bg-[#36453B]"></span>
               <span className="text-[9px] font-black uppercase tracking-[0.6em] text-[#36453B]">System Matrix v4.0</span>
             </div>
-            <h1 className="text-6xl lg:text-8xl font-black uppercase tracking-tighter text-white leading-[0.85] mb-8">{hero.title}</h1>
+            <h2 className="text-6xl lg:text-8xl font-black uppercase tracking-tighter text-white leading-[0.85] mb-8">{hero.title}</h2>
             <p className="text-base text-slate-300 font-medium leading-relaxed max-w-lg mb-12">{hero.subtitle}</p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/book" className="bg-white text-[#121212] px-10 py-6 text-[10px] font-black uppercase tracking-[0.4em] text-center shadow-2xl hover:bg-[#36453B] hover:text-white transition-all rounded-none">Book Inspection</Link>
@@ -53,6 +76,15 @@ const ServicePageTemplate: React.FC<ServicePageTemplateProps> = ({ hero, benefit
           </div>
         </div>
       </div>
+
+      {/* AEO Intro - For Answer Engine Optimisation */}
+      {aeoIntro && (
+        <div className="bg-white border-b border-slate-100 py-8">
+          <div className="max-w-4xl mx-auto px-6">
+            <p className="text-base text-slate-600 leading-relaxed">{aeoIntro}</p>
+          </div>
+        </div>
+      )}
 
       {/* Trust Strip */}
       <div className="bg-white border-b border-slate-100 py-6">
@@ -142,6 +174,35 @@ const ServicePageTemplate: React.FC<ServicePageTemplateProps> = ({ hero, benefit
           </div>
         </div>
       </div>
+
+      {/* Cross-Links Section - Internal SEO Links */}
+      {crossLinks && crossLinks.length > 0 && (
+        <div className="py-16 bg-[#FDFCFB] border-t border-slate-100">
+          <div className="max-w-7xl mx-auto px-6">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#36453B] mb-8">Related Services</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {crossLinks.map((link, idx) => (
+                <Link
+                  key={idx}
+                  to={link.href}
+                  className="bg-white border border-slate-200 p-8 hover:border-[#36453B] transition-all group"
+                >
+                  <h3 className="text-base font-black uppercase tracking-tight text-[#121212] mb-2 group-hover:text-[#36453B] transition-colors">
+                    {link.title}
+                  </h3>
+                  <p className="text-sm text-slate-500">{link.description}</p>
+                  <span className="inline-flex items-center gap-2 mt-4 text-[10px] font-bold uppercase tracking-[0.3em] text-[#36453B]">
+                    Learn More <ArrowRight className="w-3 h-3" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FAQ Section */}
+      {faqs && faqs.length > 0 && <FAQSection faqs={faqs} />}
 
       <div className="py-24 bg-[#FDFCFB] text-center border-t border-slate-100">
         <h2 className="text-4xl lg:text-5xl font-black uppercase tracking-tighter text-[#121212] mb-10 leading-none">Initiate <br />Asset Care.</h2>

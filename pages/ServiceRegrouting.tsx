@@ -1,13 +1,18 @@
-
 import React from 'react';
-import ServicePageTemplate, { Benefit, PricingTier, AddOn } from '../components/ServicePageTemplate';
+import ServicePageTemplate, { Benefit, PricingTier, AddOn, CrossLink } from '../components/ServicePageTemplate';
 import { Droplet, ShieldCheck, Sparkles, Layers } from 'lucide-react';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { FAQSchema, ServiceSchema } from '../components/SEOSchemas';
+import { SEO } from '../seoConfig';
 
 const ServiceRegrouting: React.FC = () => {
+  usePageSEO(SEO.regrouting);
+
   const heroData = {
     title: "Leaking Shower & Epoxy Grout Specialists",
     subtitle: "Stop leaks permanently without removing tiles. We utilize hospital-grade epoxy resin to create a 100% waterproof barrier, backed by a 10-year guarantee against water penetration.",
-    image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80",
+    imageAlt: "Epoxy regrouting a shower floor in Canberra - leaking shower repair without removing tiles"
   };
 
   const benefitsData = {
@@ -98,13 +103,51 @@ const ServiceRegrouting: React.FC = () => {
     }
   };
 
+  const faqs = [
+    { question: 'Can you fix a leaking shower without removing tiles?', answer: "Yes! Our epoxy regrouting process creates a 100% waterproof seal without removing any tiles. It's faster, cheaper, and less disruptive than re-tiling." },
+    { question: 'How long does epoxy regrouting last?', answer: 'Epoxy grout is permanent. We offer a 10-year guarantee against water penetration. Unlike cement grout, epoxy does not crack, shrink, or absorb moisture.' },
+    { question: 'How much does shower regrouting cost in Canberra?', answer: 'A targeted shower base leak repair starts from $380. A full wall-to-floor epoxy restoration costs $950-$1,400 depending on shower size.' },
+  ];
+
+  const crossLinks: CrossLink[] = [
+    {
+      title: 'Pressure Washing',
+      description: 'Complete bathroom transformations with our exterior pressure washing.',
+      href: '/pressure-washing'
+    },
+    {
+      title: 'Pool Maintenance',
+      description: 'Keep your entire property in pristine condition.',
+      href: '/pool-maintenance'
+    },
+    {
+      title: 'Book a Service',
+      description: 'Schedule a free inspection and quote for your shower.',
+      href: '/book'
+    }
+  ];
+
   return (
-    <ServicePageTemplate 
-      hero={heroData}
-      benefits={benefitsData}
-      pricing={pricingData}
-      addOns={addOnsData}
-    />
+    <>
+      <FAQSchema faqs={faqs} />
+      <ServiceSchema
+        name="Epoxy Regrouting"
+        description="Leaking shower repair and epoxy grout specialists in Canberra. Fix leaks without removing tiles. 10-year waterproof guarantee."
+        areaServed="Canberra, ACT"
+        priceRange="$380 - $1,400"
+        url="https://revivepropertyco.au/regrouting"
+      />
+      <ServicePageTemplate
+        hero={heroData}
+        benefits={benefitsData}
+        pricing={pricingData}
+        addOns={addOnsData}
+        seoH1="Leaking Shower Repair & Epoxy Regrouting Canberra"
+        aeoIntro="Yes, we can fix leaking showers without removing tiles. Epoxy regrouting in Canberra starts from $380 for a targeted shower base repair, with a 10-year waterproof guarantee."
+        crossLinks={crossLinks}
+        faqs={faqs}
+      />
+    </>
   );
 };
 

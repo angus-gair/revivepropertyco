@@ -15,15 +15,31 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-public"
 
-      # HTTP -> HTTPS redirect
+      # HTTP apex -> HTTPS apex redirect
       - "traefik.http.routers.revivepropertyco-http.rule=Host(`revivepropertyco.au`)"
       - "traefik.http.routers.revivepropertyco-http.entrypoints=web"
       - "traefik.http.routers.revivepropertyco-http.middlewares=redirect-to-https"
 
-      # HTTPS router
+      # HTTP www -> HTTPS apex redirect
+      - "traefik.http.routers.revivepropertyco-www-http.rule=Host(`www.revivepropertyco.au`)"
+      - "traefik.http.routers.revivepropertyco-www-http.entrypoints=web"
+      - "traefik.http.routers.revivepropertyco-www-http.middlewares=redirect-to-https"
+
+      # HTTPS www -> HTTPS apex redirect
+      - "traefik.http.routers.revivepropertyco-www.rule=Host(`www.revivepropertyco.au`)"
+      - "traefik.http.routers.revivepropertyco-www.entrypoints=websecure"
+      - "traefik.http.routers.revivepropertyco-www.tls.certresolver=cloudflare"
+      - "traefik.http.routers.revivepropertyco-www.middlewares=www-to-apex"
+
+      # HTTPS apex router
       - "traefik.http.routers.revivepropertyco.rule=Host(`revivepropertyco.au`)"
       - "traefik.http.routers.revivepropertyco.entrypoints=websecure"
       - "traefik.http.routers.revivepropertyco.tls.certresolver=cloudflare"
+
+      # www -> apex redirect middleware
+      - "traefik.http.middlewares.www-to-apex.redirectregex.regex=^https://www\\.revivepropertyco\\.au/(.*)"
+      - "traefik.http.middlewares.www-to-apex.redirectregex.replacement=https://revivepropertyco.au/$${1}"
+      - "traefik.http.middlewares.www-to-apex.redirectregex.permanent=true"
 
       # Service
       - "traefik.http.services.revivepropertyco.loadbalancer.server.port=80"

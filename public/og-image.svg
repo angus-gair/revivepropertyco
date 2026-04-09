@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="600" y="280" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#f8fafc" text-anchor="middle">Revive Property Co.</text>
+  <text x="600" y="350" font-family="Arial, sans-serif" font-size="42" fill="#94a3b8" text-anchor="middle">Premium Property Maintenance</text>
+  <text x="600" y="400" font-family="Arial, sans-serif" font-size="36" fill="#64748b" text-anchor="middle">Canberra ACT</text>
+  <rect x="450" y="480" width="300" height="60" rx="8" fill="#3b82f6"/>
+  <text x="600" y="520" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff" text-anchor="middle">BOOK NOW</text>
+</svg>

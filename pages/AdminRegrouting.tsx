@@ -1,5 +1,7 @@
 
 import React from 'react';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { SEO } from '../seoConfig';
 import { 
   TrendingUp, 
   Hammer, 
@@ -27,6 +29,7 @@ import {
 } from 'lucide-react';
 
 const AdminRegrouting: React.FC = () => {
+  usePageSEO({ ...SEO.adminRegrouting, noindex: true });
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {

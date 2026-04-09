@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { SEO } from '../seoConfig';
 
 const API_BASE = import.meta.env.PROD
   ? 'https://revivepropertyco.au'
   : 'http://localhost:3001';
 
 const LoginPage: React.FC = () => {
+  usePageSEO({ ...SEO.login, noindex: true });
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

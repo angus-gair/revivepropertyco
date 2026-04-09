@@ -1,6 +1,8 @@
 
 import * as React from 'react';
 import { useEffect, useState, useMemo } from 'react';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { SEO } from '../seoConfig';
 import { getLeads, getAppointments, updateLead, getTasks, addTask, updateTask, deleteTask } from '../services/crmService';
 import { Lead, Appointment, LeadStatus, ServiceType, Task } from '../types';
 import { 
@@ -32,6 +34,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard: React.FC = () => {
+  usePageSEO({ ...SEO.admin, noindex: true });
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
   

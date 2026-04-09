@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { SEO } from '../seoConfig';
 import { 
   User, 
   Mail, 
@@ -17,6 +19,7 @@ import {
 } from 'lucide-react';
 
 const ContactPage: React.FC = () => {
+  usePageSEO(SEO.contact);
   return (
     <div className="bg-[#FDFCFB] min-h-screen py-16 px-6 lg:px-8 font-sans text-[#121212]">
       <div className="max-w-7xl mx-auto">

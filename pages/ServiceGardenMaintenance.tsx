@@ -1,13 +1,19 @@
 
 import React from 'react';
-import ServicePageTemplate, { Benefit, PricingTier, AddOn } from '../components/ServicePageTemplate';
+import ServicePageTemplate, { Benefit, PricingTier, AddOn, CrossLink } from '../components/ServicePageTemplate';
 import { Scissors, Sun, Leaf, Ruler } from 'lucide-react';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { FAQSchema, ServiceSchema } from '../components/SEOSchemas';
+import { SEO } from '../seoConfig';
 
 const ServiceGardenMaintenance: React.FC = () => {
+  usePageSEO(SEO.gardenMaintenance);
+
   const heroData = {
     title: "Curated Estate Management",
     subtitle: "Architectural horticultural care for Canberra's premium residential gardens. We provide precision maintenance that respects the original landscape design intent.",
-    image: "https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&q=80",
+    imageAlt: "Professional lawn mowing and garden maintenance in Canberra - freshly mowed lawn with sharp edges"
   };
 
   const benefitsData = {
@@ -98,13 +104,51 @@ const ServiceGardenMaintenance: React.FC = () => {
     }
   };
 
+  const faqs = [
+    { question: 'How much does lawn mowing cost in Canberra?', answer: 'A standard precision mow for residential blocks starts from $90-$120 including edging, blowing, and clipping extraction.' },
+    { question: 'Do you do one-off garden cleanups?', answer: 'Yes! Our Garden Overhaul service is perfect for neglected properties or pre-sale transformations, starting from $500.' },
+    { question: 'How often should I have my garden maintained?', answer: 'Fortnightly visits are ideal during the growing season (spring/summer). Monthly is sufficient through autumn and winter in Canberra.' },
+  ];
+
+  const crossLinks: CrossLink[] = [
+    {
+      title: 'Pressure Washing',
+      description: 'Complete your property transformation with driveway and path cleaning.',
+      href: '/pressure-washing'
+    },
+    {
+      title: 'Rubbish Removal',
+      description: 'Green waste removal after garden overhauls and cleanups.',
+      href: '/rubbish-removal'
+    },
+    {
+      title: 'Pool Maintenance',
+      description: 'Complete outdoor maintenance for your entire property.',
+      href: '/pool-maintenance'
+    }
+  ];
+
   return (
-    <ServicePageTemplate 
-      hero={heroData}
-      benefits={benefitsData}
-      pricing={pricingData}
-      addOns={addOnsData}
-    />
+    <>
+      <FAQSchema faqs={faqs} />
+      <ServiceSchema
+        name="Garden Maintenance"
+        description="Regular lawn mowing, hedge trimming, garden care and rubbish removal in Canberra. Reliable estate care for homes in Braddon, Kingston, Griffith & surrounds."
+        areaServed="Canberra, ACT"
+        priceRange="$90 - $500+"
+        url="https://revivepropertyco.au/garden-maintenance"
+      />
+      <ServicePageTemplate
+        hero={heroData}
+        benefits={benefitsData}
+        pricing={pricingData}
+        addOns={addOnsData}
+        seoH1="Garden & Lawn Maintenance in Canberra"
+        aeoIntro="Professional lawn mowing in Canberra starts from $90. We provide precision edging, hedge trimming, and complete garden maintenance for Braddon, Kingston, Griffith, and surrounding suburbs."
+        crossLinks={crossLinks}
+        faqs={faqs}
+      />
+    </>
   );
 };
 

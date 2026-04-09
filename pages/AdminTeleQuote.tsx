@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useEffect, useState, useRef } from 'react';
 import { getLeads, updateTeleQuoteSession, updateLead } from '../services/crmService';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { SEO } from '../seoConfig';
 import { Lead, LeadStatus, TeleQuoteSession } from '../types';
 import { GoogleGenAI } from "@google/genai";
 import { 
@@ -59,6 +61,7 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode; position?: 't
 };
 
 const AdminTeleQuote: React.FC = () => {
+  usePageSEO({ ...SEO.adminTelequote, noindex: true });
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);

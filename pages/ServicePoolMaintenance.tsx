@@ -1,12 +1,18 @@
 import React from 'react';
-import ServicePageTemplate, { Benefit, PricingTier, AddOn } from '../components/ServicePageTemplate';
+import ServicePageTemplate, { Benefit, PricingTier, AddOn, CrossLink } from '../components/ServicePageTemplate';
 import { Waves, Droplet, Thermometer } from 'lucide-react';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { FAQSchema, ServiceSchema } from '../components/SEOSchemas';
+import { SEO } from '../seoConfig';
 
 const ServicePoolMaintenance: React.FC = () => {
+  usePageSEO(SEO.poolMaintenance);
+
   const heroData = {
     title: "Crystal Clear Pool Maintenance",
     subtitle: "Spend your summer swimming, not skimming. We handle the chemicals, cleaning, and equipment checks so your pool is always ready to dive in.",
-    image: "https://images.unsplash.com/photo-1576013551627-5cc20b3db415?auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1576013551627-5cc20b3db415?auto=format&fit=crop&q=80",
+    imageAlt: "Crystal clear swimming pool in Canberra backyard - professional pool cleaning and maintenance"
   };
 
   const benefitsData = {
@@ -96,13 +102,51 @@ const ServicePoolMaintenance: React.FC = () => {
     }
   };
 
+  const faqs = [
+    { question: 'How often should I have my pool serviced in Canberra?', answer: 'We recommend monthly maintenance visits. During summer with heavy use, fortnightly is ideal.' },
+    { question: 'My pool has turned green. Can you fix it?', answer: 'Yes! Our Green Pool Recovery service starts from $300 and includes shock treatment, flocculant, vacuum-to-waste, and filter degreasing.' },
+    { question: 'How much does pool maintenance cost in Canberra?', answer: 'Regular pool maintenance visits start from $50 per service. Green pool recovery and equipment repairs are quoted separately.' },
+  ];
+
+  const crossLinks: CrossLink[] = [
+    {
+      title: 'Garden Maintenance',
+      description: 'Complete outdoor maintenance including pool surroundings.',
+      href: '/garden-maintenance'
+    },
+    {
+      title: 'Pressure Washing',
+      description: 'Clean pool decks and surrounding paved areas.',
+      href: '/pressure-washing'
+    },
+    {
+      title: 'Book a Service',
+      description: 'Schedule regular pool maintenance or green pool recovery.',
+      href: '/book'
+    }
+  ];
+
   return (
-    <ServicePageTemplate 
-      hero={heroData}
-      benefits={benefitsData}
-      pricing={pricingData}
-      addOns={addOnsData}
-    />
+    <>
+      <FAQSchema faqs={faqs} />
+      <ServiceSchema
+        name="Pool Maintenance"
+        description="Professional pool cleaning, chemical balancing, equipment checks and green pool recovery in Canberra. Keep your pool pristine year-round."
+        areaServed="Canberra, ACT"
+        priceRange="$50 - $300+"
+        url="https://revivepropertyco.au/pool-maintenance"
+      />
+      <ServicePageTemplate
+        hero={heroData}
+        benefits={benefitsData}
+        pricing={pricingData}
+        addOns={addOnsData}
+        seoH1="Pool Cleaning & Maintenance Canberra"
+        aeoIntro="Professional pool maintenance in Canberra starts from $50 per service. We handle chemical balancing, equipment checks, and green pool recovery for homes across the ACT."
+        crossLinks={crossLinks}
+        faqs={faqs}
+      />
+    </>
   );
 };
 

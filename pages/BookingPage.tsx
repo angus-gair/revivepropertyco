@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { SEO } from '../seoConfig';
 import { getAvailableSlots, submitBooking } from '../services/bookingApiService';
 import { ServiceType, AppointmentType } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +10,7 @@ import CalendarPicker from '../components/CalendarPicker';
 import MediaUpload from '../components/TeleQuote/MediaUpload';
 
 const BookingPage: React.FC = () => {
+  usePageSEO(SEO.book);
   const navigate = useNavigate();
   
   const tomorrow = new Date();

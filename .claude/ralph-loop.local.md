@@ -1,10 +1,14 @@
 ---
 active: true
-iteration: 131
+iteration: 1
 session_id: 
-max_iterations: 0
-completion_promise: null
-started_at: "2026-03-13T11:00:30Z"
+max_iterations: 10
+completion_promise: "DONE"
+started_at: "2026-04-09T18:20:44Z"
 ---
 
-can you use the browser to test the live site with real appointments. test that the emails come through. i have mailspring open --COMPLETITION-PROMISE Completed --MAX-ITERATIONS=10
+CAN YOU REDEPLOY THE APP. USER TEST THE SITE ONCE TO ENSURE NO ERRORS, THEN CAN YOU TIDY
+  UP THE PROJECT. REMOVE FILES THAT ARE NO LONGER NEEDED (OR ZIP THEM IN AN ARCHIEVE).
+  ENSURE THE PROJECT DIRECTORIES ARE STRUCTURED LOGICALLY, UPDATE ANY AI AGENT FILES
+  ENSURING THE THE INFORMATION IN THERE REFERENCE DOCS IS CORRECT. SYNC WITH REMOTE. CREATE
+  A PR

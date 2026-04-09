@@ -1,13 +1,19 @@
 
 import React from 'react';
-import ServicePageTemplate, { Benefit, PricingTier, AddOn } from '../components/ServicePageTemplate';
+import ServicePageTemplate, { Benefit, PricingTier, AddOn, CrossLink } from '../components/ServicePageTemplate';
 import { Home, Shield, Zap } from 'lucide-react';
+import { usePageSEO } from '../hooks/usePageSEO';
+import { FAQSchema, ServiceSchema } from '../components/SEOSchemas';
+import { SEO } from '../seoConfig';
 
 const ServicePressureWashing: React.FC = () => {
+  usePageSEO(SEO.pressureWashing);
+
   const heroData = {
     title: "Precision Pressure Restoration",
     subtitle: "High-spec cleaning for Canberra's elite residential facades. We utilize pharmaceutical-grade chemicals and low-pressure soft wash techniques to restore integrity.",
-    image: "https://images.unsplash.com/photo-1621252179027-94459d27d3ee?auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1621252179027-94459d27d3ee?auto=format&fit=crop&q=80",
+    imageAlt: "Professional pressure washing a concrete driveway in Braddon, Canberra"
   };
 
   const benefitsData = {
@@ -97,13 +103,52 @@ const ServicePressureWashing: React.FC = () => {
     }
   };
 
+  const faqs = [
+    { question: 'How much does pressure washing cost in Canberra?', answer: 'Pressure washing in Canberra typically starts from $150 for a single driveway (up to 40m²). A full exterior restoration starts at $800+. Contact Revive Property Co. for a free quote tailored to your property.' },
+    { question: 'How long does pressure washing take?', answer: 'Most residential pressure washing jobs take 2-4 hours. Larger properties or heavily stained surfaces may take a full day.' },
+    { question: 'Will pressure washing damage my driveway or paint?', answer: 'No. We use appropriate pressure levels and soft-wash techniques for delicate surfaces. Our trained operators assess each surface type before cleaning.' },
+    { question: 'Do you pressure wash in winter in Canberra?', answer: 'Yes, we operate year-round. Winter is actually ideal for cleaning before algae and mould become established in the warmer months.' },
+  ];
+
+  const crossLinks: CrossLink[] = [
+    {
+      title: 'Garden Maintenance',
+      description: 'Complete garden cleanup after pressure washing for a transformed property.',
+      href: '/garden-maintenance'
+    },
+    {
+      title: 'Epoxy Regrouting',
+      description: 'Fix leaking showers and restore grout to like-new condition.',
+      href: '/regrouting'
+    },
+    {
+      title: 'Rubbish Removal',
+      description: 'Clear away green waste and debris after exterior cleaning.',
+      href: '/rubbish-removal'
+    }
+  ];
+
   return (
-    <ServicePageTemplate 
-      hero={heroData}
-      benefits={benefitsData}
-      pricing={pricingData}
-      addOns={addOnsData}
-    />
+    <>
+      <FAQSchema faqs={faqs} />
+      <ServiceSchema
+        name="Pressure Washing"
+        description="Professional high-pressure and soft-wash cleaning for driveways, patios, building facades, and roofs in the Canberra region."
+        areaServed="Canberra, ACT"
+        priceRange="$150 - $800+"
+        url="https://revivepropertyco.au/pressure-washing"
+      />
+      <ServicePageTemplate
+        hero={heroData}
+        benefits={benefitsData}
+        pricing={pricingData}
+        addOns={addOnsData}
+        seoH1="Professional Pressure Washing in Canberra"
+        aeoIntro="Professional pressure washing in Canberra starts from $150. We use soft-wash techniques and pharmaceutical-grade chemicals to safely restore driveways, patios, and building exteriors. Free quotes available."
+        crossLinks={crossLinks}
+        faqs={faqs}
+      />
+    </>
   );
 };
 

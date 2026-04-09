@@ -47,31 +47,30 @@ npm start
 
 ### AI Chat Service ("Riv")
 
-The chat widget uses the GLM API (OpenAI-compatible) for natural language interactions:
+The chat widget uses the Z.AI Dedicated Coding PAAS for ultra-fast natural language interactions:
 
-- **Endpoint**: Configured in `services/geminiService.ts`
-- **Model**: `glm-4.7`
+- **Endpoint**: `https://api.z.ai/api/coding/paas/v4/chat/completions`
+- **Model**: `glm-4.7` (Optimized for specialized reasoning and code)
+- **Performance**: `thinking: { type: 'disabled' }` enabled for near-instant responses (<2500ms).
 - **Environment variables**: `API_URL`, `API_KEY`
-- System prompt includes service pricing tiers and conversion guidelines
-- Maintains chat history (truncated to last 10 messages)
+- System prompt: Calibrated for Canberra ACT suburbs and industrial pricing modules.
+- Context: Truncated to 10-message sliding window.
 
-**Important**: The service is called "geminiService" and "Riv" but actually uses the GLM API (Zhipu AI), not Google Gemini.
+### Styling & UI Framework
 
-### Supabase Integration
-
-- Supabase client initialized in `lib/supabase.ts`
-- Used for authentication (admin login) and data persistence (leads, appointments, tasks, campaigns)
-- `AuthContext` provides `user`, `session`, `loading`, and `signOut` throughout the app
-- Database schema in `db_schema.sql`
+- **System**: **Tailwind CSS v4**
+- **Build**: Local PostCSS integration via `@tailwindcss/postcss`.
+- **Global Entry**: `index.css` using `@import "tailwindcss";`.
+- **Design Philosophy**: High-density architectural "Blueprint" aesthetic. Zero-scroll success viewport containment.
 
 ### Deployment
 
 Production deployment uses multi-stage Docker build:
-1. **Builder stage**: Node 20 Alpine, runs `npm run build`
+1. **Builder stage**: Node 20 Alpine, runs `npm run build` (Vite + PostCSS)
 2. **Production stage**: Nginx Alpine, serves static files with SPA routing support
 - Health check on port 80
 - Traefik labels for HTTPS routing (domain: `revivepropertyco.au`)
-- Connected to `homelab_web` and `traefik-public` networks
+- Automated validation via `final-booking-test.sh` and `test-riv-performance.cjs`.
 
 ### TypeScript Configuration
 

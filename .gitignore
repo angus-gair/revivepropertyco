@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Development artifacts
+.playwright-mcp/
+.ai-codex/
+test-results/
+tmp/
+*.test-summary.png
+
+# Test scripts (keep in project but don't track output)
+test-output/

@@ -22,29 +22,29 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Increased border contrast here (slate-300) */}
       <nav className="bg-white border-b border-slate-300 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
+          <div className="flex justify-between h-14">
             <div className="flex items-center">
               <Link to="/" className="flex-shrink-0 flex items-center">
-                <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center mr-2">
-                  <span className="text-white font-bold text-lg">R</span>
+                <div className="h-7 w-7 bg-[#36453B] rounded-sm flex items-center justify-center mr-2 shadow-lg shadow-[#36453B]/20">
+                  <span className="text-white font-black text-sm">R</span>
                 </div>
-                <span className="font-bold text-xl text-slate-900 tracking-tight">Revive Property Co.</span>
+                <span className="font-black text-lg text-[#121212] tracking-tighter uppercase">Revive</span>
               </Link>
             </div>
             
             {/* Desktop Menu */}
-            <div className="hidden md:flex md:items-center md:space-x-8">
+            <div className="hidden md:flex md:items-center md:space-x-6">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                  className={`inline-flex items-center px-1 pt-1 text-[10px] font-black uppercase tracking-widest transition-colors duration-200 ${
                     isActive(link.path)
-                      ? 'border-blue-500 text-slate-900'
-                      : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-400'
+                      ? 'text-[#36453B]'
+                      : 'text-slate-400 hover:text-[#121212]'
                   }`}
                 >
-                  <link.icon className="w-4 h-4 mr-2" />
+                  <link.icon className={`w-3.5 h-3.5 mr-2 ${isActive(link.path) ? 'text-[#36453B]' : 'text-slate-300'}`} />
                   {link.name}
                 </Link>
               ))}

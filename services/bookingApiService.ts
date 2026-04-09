@@ -52,7 +52,8 @@ export const submitBooking = async (bookingData: {
     console.error('Booking failed:', data);
     return {
       success: false,
-      error: data.error || 'Failed to create booking'
+      error: data.error || 'Failed to create booking',
+      details: data.details
     };
   }
 

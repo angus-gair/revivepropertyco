@@ -72,7 +72,19 @@ docker-compose -f docker-compose.production.yml logs -f
 
 ## 📊 Post-Deployment Verification
 
-### 1. Health Check
+### 1. Automated System Validation
+
+Run the following scripts to verify system integrity post-deployment:
+
+```bash
+# E2E Booking & Email Chain Test
+./final-booking-test.sh
+
+# AI Concierge Performance Benchmark
+node test-riv-performance.cjs
+```
+
+### 2. Manual Health Check
 
 Check the backend health endpoint:
 
@@ -84,11 +96,21 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "timestamp": "2026-03-12T16:15:00.000Z",
+  "timestamp": "2026-04-09T03:00:00.000Z",
   "uptime": 123.456,
   "environment": "production"
 }
 ```
+
+### 3. Concierge Latency Check
+
+Verify that the AI responses are under the 3000ms threshold:
+
+```bash
+node test-riv-performance.cjs | grep "Duration"
+```
+
+Expected output: `Duration: < 2500 ms` per query.
 
 ### 2. Test Booking Flow
 

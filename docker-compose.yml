@@ -6,6 +6,8 @@ services:
     environment:
       - API_URL=https://api.z.ai/api/coding/paas/v4
       - API_KEY=70f80ec6e2904f14bc93e6bc40f48338.9OZMUYo3ET2EYxRn
+      - VITE_ADMIN_USERNAME=admin
+      - VITE_ADMIN_PASSWORD=revive-admin-2026
 
     networks:
       - homelab_web

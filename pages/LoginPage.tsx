@@ -5,9 +5,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePageSEO } from '../hooks/usePageSEO';
 import { SEO } from '../seoConfig';
 
-const API_BASE = import.meta.env.PROD
-  ? 'https://revivepropertyco.au'
-  : 'http://localhost:3001';
+// Client-side credential validation for static deployment
+// In production with no backend, validate against build-time env vars
+const ADMIN_USERNAME = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
 
 const LoginPage: React.FC = () => {
   usePageSEO({ ...SEO.login, noindex: true });
@@ -26,35 +27,29 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     setError(null);
 
+    // Simulate API delay for UX
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     try {
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        })
-      });
-
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error('Server unavailable - please try again later');
+      // Client-side credential validation
+      if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+        throw new Error('Invalid username or password');
       }
 
-      const data = await response.json();
+      // Create mock user and token
+      const mockUser = {
+        id: '1',
+        username: ADMIN_USERNAME,
+        email: 'admin@revivepropertyco.au'
+      };
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to login");
-      }
+      const mockToken = btoa(JSON.stringify({
+        user: mockUser,
+        exp: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      }));
 
-      if (data.success && data.token) {
-        signIn(data.token, data.user);
-        navigate(from, { replace: true });
-      } else {
-        throw new Error("Invalid response from server");
-      }
+      signIn(mockToken, mockUser);
+      navigate(from, { replace: true });
     } catch (err: any) {
       setError(err.message || "Failed to login");
     } finally {

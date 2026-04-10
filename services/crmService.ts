@@ -47,30 +47,45 @@ const mapTask = (dbTask: any): Task => ({
 });
 
 export const getLeads = async (): Promise<Lead[]> => {
-  const response = await fetch(`${API_BASE}/api/crm/leads`, {
-    headers: getAuthHeader()
-  });
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data.map(mapLead);
+  try {
+    const response = await fetch(`${API_BASE}/api/crm/leads`, {
+      headers: getAuthHeader()
+    });
+    const contentType = response.headers.get('content-type') || '';
+    if (!response.ok || !contentType.includes('application/json')) return [];
+    const data = await response.json();
+    return data.map(mapLead);
+  } catch {
+    return [];
+  }
 };
 
 export const getAppointments = async (): Promise<Appointment[]> => {
-  const response = await fetch(`${API_BASE}/api/crm/appointments`, {
-    headers: getAuthHeader()
-  });
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data.map(mapAppointment);
+  try {
+    const response = await fetch(`${API_BASE}/api/crm/appointments`, {
+      headers: getAuthHeader()
+    });
+    const contentType = response.headers.get('content-type') || '';
+    if (!response.ok || !contentType.includes('application/json')) return [];
+    const data = await response.json();
+    return data.map(mapAppointment);
+  } catch {
+    return [];
+  }
 };
 
 export const getTasks = async (): Promise<Task[]> => {
-  const response = await fetch(`${API_BASE}/api/crm/tasks`, {
-    headers: getAuthHeader()
-  });
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data.map(mapTask);
+  try {
+    const response = await fetch(`${API_BASE}/api/crm/tasks`, {
+      headers: getAuthHeader()
+    });
+    const contentType = response.headers.get('content-type') || '';
+    if (!response.ok || !contentType.includes('application/json')) return [];
+    const data = await response.json();
+    return data.map(mapTask);
+  } catch {
+    return [];
+  }
 };
 
 export const updateLead = async (id: string, updates: Partial<Lead>): Promise<Lead> => {
@@ -81,53 +96,65 @@ export const updateLead = async (id: string, updates: Partial<Lead>): Promise<Le
   if (updates.status) dbUpdates.status = updates.status;
   if (updates.notes) dbUpdates.notes = updates.notes;
 
-  const response = await fetch(`${API_BASE}/api/crm/leads/${id}`, {
-    method: 'PATCH',
-    headers: {
-      ...getAuthHeader(),
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(dbUpdates)
-  });
-  
-  if (!response.ok) throw new Error('Failed to update lead');
-  const data = await response.json();
-  return mapLead(data);
+  try {
+    const response = await fetch(`${API_BASE}/api/crm/leads/${id}`, {
+      method: 'PATCH',
+      headers: {
+        ...getAuthHeader(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dbUpdates)
+    });
+    const contentType = response.headers.get('content-type') || '';
+    if (!response.ok || !contentType.includes('application/json')) throw new Error('API unavailable');
+    const data = await response.json();
+    return mapLead(data);
+  } catch (e) {
+    throw new Error('Failed to update lead');
+  }
 };
 
 export const addTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<Task> => {
-  const response = await fetch(`${API_BASE}/api/crm/tasks`, {
-    method: 'POST',
-    headers: {
-      ...getAuthHeader(),
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      title: task.title,
-      leadId: task.leadId,
-      dueDate: task.dueDate,
-      completed: task.completed
-    })
-  });
-  
-  if (!response.ok) throw new Error('Failed to add task');
-  const data = await response.json();
-  return mapTask(data);
+  try {
+    const response = await fetch(`${API_BASE}/api/crm/tasks`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeader(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title: task.title,
+        leadId: task.leadId,
+        dueDate: task.dueDate,
+        completed: task.completed
+      })
+    });
+    const contentType = response.headers.get('content-type') || '';
+    if (!response.ok || !contentType.includes('application/json')) throw new Error('API unavailable');
+    const data = await response.json();
+    return mapTask(data);
+  } catch (e) {
+    throw new Error('Failed to add task');
+  }
 };
 
 export const updateTask = async (id: string, updates: Partial<Task>): Promise<Task> => {
-  const response = await fetch(`${API_BASE}/api/crm/tasks/${id}`, {
-    method: 'PATCH',
-    headers: {
-      ...getAuthHeader(),
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(updates)
-  });
-  
-  if (!response.ok) throw new Error('Failed to update task');
-  const data = await response.json();
-  return mapTask(data);
+  try {
+    const response = await fetch(`${API_BASE}/api/crm/tasks/${id}`, {
+      method: 'PATCH',
+      headers: {
+        ...getAuthHeader(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updates)
+    });
+    const contentType = response.headers.get('content-type') || '';
+    if (!response.ok || !contentType.includes('application/json')) throw new Error('API unavailable');
+    const data = await response.json();
+    return mapTask(data);
+  } catch (e) {
+    throw new Error('Failed to update task');
+  }
 };
 
 export const deleteTask = async (id: string): Promise<void> => {

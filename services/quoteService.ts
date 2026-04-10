@@ -24,6 +24,12 @@ export const getQuotes = async (): Promise<Quote[]> => {
       return [];
     }
 
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      console.error('Invalid content type:', contentType);
+      return [];
+    }
+
     const data = await response.json();
     return data.quotes || [];
   } catch (error) {
@@ -51,8 +57,17 @@ export const createQuote = async (quote: Omit<Quote, 'id' | 'createdAt'>): Promi
     });
 
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || 'Failed to create quote');
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create quote');
+      }
+      throw new Error('Failed to create quote');
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error('Invalid response type');
     }
 
     const data = await response.json();
@@ -82,8 +97,17 @@ export const updateQuote = async (id: string, updates: Partial<Quote>): Promise<
     });
 
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || 'Failed to update quote');
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update quote');
+      }
+      throw new Error('Failed to update quote');
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error('Invalid response type');
     }
 
     const data = await response.json();

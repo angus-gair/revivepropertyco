@@ -82,6 +82,7 @@ const LoginPage: React.FC = () => {
                   id="username"
                   name="username"
                   type="text"
+                  autoComplete="username"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}

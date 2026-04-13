@@ -1,0 +1,18 @@
+{
+  "name": "hipages-scraper",
+  "version": "1.0.0",
+  "description": "hipages lead scraper service with Playwright",
+  "main": "src/scheduler.js",
+  "scripts": {
+    "scrape": "node src/scraper.js",
+    "start": "node src/scheduler.js",
+    "test": "node src/scraper.js"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "1.59.1",
+    "pg": "8.11.0",
+    "node-cron": "3.0.3",
+    "dotenv": "17.4.1"
+  }
+}

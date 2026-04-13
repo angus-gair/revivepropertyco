@@ -6,7 +6,8 @@
   "scripts": {
     "scrape": "node src/scraper.js",
     "start": "node src/scheduler.js",
-    "test": "node src/scraper.js"
+    "test": "node src/scraper.js",
+    "test-db": "node test-db-connection.js"
   },
   "type": "commonjs",
   "dependencies": {

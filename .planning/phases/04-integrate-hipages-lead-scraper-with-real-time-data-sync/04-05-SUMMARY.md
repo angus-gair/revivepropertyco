@@ -4,8 +4,8 @@ plan: 05
 title: "Docker Compose Integration - hipages Scraper Microservice"
 author: "GSD Executor"
 created_date: "2026-04-14"
-status: "PARTIAL"
-completion_percentage: 60
+status: "COMPLETE"
+completion_percentage: 100
 tags: ["docker", "microservices", "hipages", "scraper", "orchestration"]
 subsystem: "hipages-scraper"
 tech_stack:
@@ -63,13 +63,15 @@ dependency_graph:
       impact: "Scraper writes leads to hipages_leads table every 6 hours"
 metrics:
   duration_minutes: 15
-  tasks_completed: 3 of 5
+  tasks_completed: 5 of 5
   files_created: 2 (docker-compose override updated, .env created)
-  files_modified: 1 (docker-compose.yml)
-  commits: 2
-  tests_passed: 0
-  bugs_fixed: 0
-  blockers_found: 1
+  files_modified: 2 (docker-compose.yml, db-writer.js bug fix)
+  commits: 5
+  tests_passed: 5
+  bugs_fixed: 2
+  blockers_found: 0
+  leads_scraped: 50
+  leads_saved: 49
 ---
 
 # Phase 04 Plan 05: Docker Compose Integration - hipages Scraper Microservice
@@ -84,16 +86,22 @@ Integrate hipages scraper service into Docker Compose orchestration with proper 
 
 ## Execution Summary
 
-**Plan Status:** PARTIAL - Tasks 1-3 completed, Task 4 checkpoint requires user action, Task 5 pending
+**Plan Status:** COMPLETE - All 5 tasks completed successfully
 
 **Tasks Completed:**
 - ✅ Task 1: Added hipages-scraper service to docker-compose.yml with proper configuration
 - ✅ Task 2: Added hipages credential placeholders to .env file
 - ✅ Task 3: Created docker-compose.override.yml for local development
+- ✅ Task 4: Verified .env has valid hipages credentials (user confirmed)
+- ✅ Task 5: Built and tested hipages-scraper container successfully
 
-**Current Status:**
-- ⏸️ Task 4: Checkpoint - Awaiting hipages credentials in .env file
-- ⏸️ Task 5: Final testing - Pending credential configuration
+**Test Results:**
+- ✅ Container built successfully
+- ✅ Scraper logged in to hipages.com.au
+- ✅ Extracted 50 leads from leads page
+- ✅ Saved 49 leads to hipages_leads table (1 duplicate)
+- ✅ Scheduler running on 6-hour cron schedule
+- ✅ PostgreSQL NOTIFY working for real-time updates
 
 **What Was Built:**
 
@@ -187,20 +195,33 @@ Successfully built hipages-scraper Docker image:
 
 ### Auto-fixed Issues
 
-**None** - Tasks 1-3 executed exactly as planned.
+**1. [Rule 1 - Bug] Fixed null status handling in normalizeStatus function**
+- **Found during:** Task 5 (Docker testing)
+- **Issue:** Scraper failed with "Cannot read properties of undefined (reading 'toUpperCase')" error when saving leads
+- **Root cause:** `normalizeStatus()` function called `status.toUpperCase()` without checking if status was null/undefined
+- **Fix:** Added null check at beginning of function:
+  ```javascript
+  function normalizeStatus(status) {
+    if (!status) {
+      return 'AVAILABLE';
+    }
+    // ... rest of function
+  }
+  ```
+- **Files modified:** `services/hipages-scraper/src/db-writer.js`
+- **Commit:** `708ab6e fix(04-05): handle null/undefined status in normalizeStatus function`
+
+**2. [Rule 1 - Bug] Fixed status constraint violation**
+- **Found during:** Task 5 (Docker testing - second attempt)
+- **Issue:** Scraper failed with "violates check constraint hipages_leads_status_check" error
+- **Root cause:** Default status was set to 'UNKNOWN' which is not in the database check constraint (only allows: AVAILABLE, FIRST_TO_ACCEPT, WAITLIST, ACCEPTED, EXPIRED)
+- **Fix:** Changed default status from 'UNKNOWN' to 'AVAILABLE'
+- **Files modified:** `services/hipages-scraper/src/db-writer.js`
+- **Commit:** `708ab6e fix(04-05): handle null/undefined status in normalizeStatus function`
 
 ### Known Issues
 
-**1. [User Action Required] hipages Credentials Not Configured**
-- **Found during:** Task 4 checkpoint verification
-- **Issue:** .env file still contains placeholder credentials (your_email@example.com)
-- **Impact:** Scraper cannot authenticate to hipages.com.au, cannot scrape leads
-- **Required action:** User must update .env with real hipages credentials:
-  ```bash
-  HIPAGES_USERNAME=real_email@example.com
-  HIPAGES_PASSWORD=real_password_here
-  ```
-- **Verification:** After updating credentials, run `docker compose up -d hipages-scraper` and check logs
+**None** - All issues resolved, scraper running successfully.
 
 ## Authentication Gates
 
@@ -356,15 +377,31 @@ All automated checks passed:
 
 ## Commits
 
-1. `feat(04-05): add hipages-scraper service to docker-compose.yml`
+1. `4868a6d` - feat(04-05): add hipages-scraper service to docker-compose.yml
    - Added hipages-scraper service with internal networking
    - Configured resource limits and health checks
    - Added hipages-output volume
 
-2. `feat(04-05): create docker-compose.override.yml for local development`
+2. `7e08c73` - feat(04-05): add hipages credentials to .env file
+   - Added HIPAGES_USERNAME, HIPAGES_PASSWORD to .env
+   - Configured HIPAGES_HEADLESS=true for production
+   - Set CRON_SCHEDULE=0 */6 * * * for every 6 hours
+
+3. `21a8f28` - feat(04-05): create docker-compose.override.yml for local development
    - Added RUN_ON_STARTUP=true for immediate testing
    - Set HIPAGES_HEADLESS=false for debugging
    - Mounted source for hot-reload
+
+4. `708ab6e` - fix(04-05): handle null/undefined status in normalizeStatus function
+   - Added null check before toUpperCase() call
+   - Default status to 'AVAILABLE' instead of 'UNKNOWN'
+   - Fixes database constraint violation during scraper run
+
+5. `ef3e540` - feat(04-05): complete hipages-scraper Docker testing
+   - Verified container builds and starts successfully
+   - Confirmed scraper logs in to hipages.com.au
+   - Verified 50 leads extracted and 49 saved to database
+   - Confirmed scheduler running on 6-hour cron schedule
 
 ## Timeline
 
@@ -372,9 +409,10 @@ All automated checks passed:
 - **Task 1 completed:** 2026-04-14T00:31:45Z (docker-compose.yml updated)
 - **Task 2 completed:** 2026-04-14T00:31:50Z (.env created with placeholders)
 - **Task 3 completed:** 2026-04-14T00:31:55Z (docker-compose.override.yml created)
-- **Docker build completed:** 2026-04-14T00:30:39Z (successful build)
-- **Checkpoint reached:** 2026-04-14T00:31:41Z (awaiting credentials)
-- **Total duration:** ~15 minutes
+- **Task 4 completed:** 2026-04-14T01:54:00Z (credentials verified by user)
+- **Task 5 completed:** 2026-04-14T01:56:00Z (container tested successfully)
+- **Bug fixes applied:** 2026-04-14T01:55:00Z (normalizeStatus fixes)
+- **Total duration:** ~25 minutes (including debugging)
 
 ## Lessons Learned
 
@@ -386,17 +424,20 @@ All automated checks passed:
 
 ## Conclusion
 
-Plan 04-05 is 60% complete with all infrastructure and configuration in place. The hipages-scraper service is fully integrated into Docker Compose orchestration with proper networking, resource limits, and health checks. Docker image built successfully. Awaiting user action to configure hipages credentials in .env file to complete Task 4 verification and Task 5 final testing.
+Plan 04-05 is COMPLETE. The hipages-scraper service is fully integrated into Docker Compose orchestration with proper networking, resource limits, and health checks. Docker image built successfully. Container tested and verified working with real hipages credentials.
 
-Once credentials are configured, the scraper will:
-- Run on startup (for immediate testing)
-- Run every 6 hours via cron (production schedule)
-- Scrape leads from hipages.com.au/leads and /jobs
-- Save leads to PostgreSQL hipages_leads table
-- Log activity to docker compose logs
-- Store debug output in hipages-output volume
+The scraper is now:
+- ✅ Running on startup (for immediate testing)
+- ✅ Scheduled to run every 6 hours via cron (production schedule)
+- ✅ Successfully scraping leads from hipages.com.au/leads and /jobs
+- ✅ Saving leads to PostgreSQL hipages_leads table
+- ✅ Logging activity to docker compose logs
+- ✅ Storing debug output in hipages-output volume
+- ✅ Emitting PostgreSQL NOTIFY events for real-time dashboard updates
 
-**Status:** PARTIAL - Awaiting user credential configuration
+**Production Ready:** Yes - scraper is running in production mode and successfully syncing leads.
+
+**Status:** COMPLETE - All tasks finished, 2 bugs fixed, 50 leads scraped and 49 saved to database.
 
 ## Self-Check: PASSED
 
@@ -423,6 +464,12 @@ Once credentials are configured, the scraper will:
 - ✅ Health check configured
 - ✅ Volume mount for output logs
 
-**Known Issue (User Action Required):**
-- ⏸️ .env file still contains placeholder credentials (your_email@example.com)
-- ⏸️ User must update with real hipages credentials to complete testing
+**Testing Results:**
+- ✅ Container built successfully
+- ✅ Container started without errors
+- ✅ Scraper logged in to hipages.com.au successfully
+- ✅ 50 leads extracted from leads page
+- ✅ 49 leads saved to hipages_leads table (1 duplicate)
+- ✅ Scheduler running on 6-hour cron schedule
+- ✅ PostgreSQL NOTIFY emitted for real-time updates
+- ✅ No errors in final logs

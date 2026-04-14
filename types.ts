@@ -107,4 +107,137 @@ export interface Quote {
   notes?: string;
   createdAt?: string;
   lead?: Lead;
+  customerId?: string;
+  issuedDate?: string;
+  expiryDate?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+}
+
+/**
+ * Customer Portal Types
+ */
+
+export interface Customer {
+  customerId: string;
+  firstName: string;
+  lastName: string;
+  mobile?: string;
+  email?: string;
+  address?: string;
+  suburb?: string;
+  postcode?: string;
+  state?: string;
+  createdAt?: string;
+  lastLoginAt?: string;
+}
+
+export interface CustomerDocument {
+  documentId: string;
+  customerId: string;
+  filename: string;
+  originalFilename: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  description?: string;
+  uploadedAt: string;
+}
+
+export interface CustomerQuote extends Quote {
+  canApprove: boolean;
+  canReject: boolean;
+  isExpired: boolean;
+  lineItems?: QuoteLineItem[];
+}
+
+export interface QuoteLineItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface QuoteApproval {
+  approvalId: string;
+  quoteId: string;
+  customerId: string;
+  action: 'APPROVED' | 'REJECTED';
+  reason?: string;
+  actionedAt: string;
+  actionedIp?: string;
+}
+
+export enum CustomerAuditAction {
+  REGISTER = 'REGISTER',
+  LOGIN = 'LOGIN',
+  LOGOUT = 'LOGOUT',
+  PROFILE_UPDATE = 'PROFILE_UPDATE',
+  PASSWORD_CHANGE = 'PASSWORD_CHANGE',
+  DOCUMENT_UPLOAD = 'DOCUMENT_UPLOAD',
+  DOCUMENT_DELETE = 'DOCUMENT_DELETE',
+  QUOTE_APPROVE = 'QUOTE_APPROVE',
+  QUOTE_REJECT = 'QUOTE_REJECT',
+}
+
+/**
+ * hipages Scraper Types
+ */
+
+export enum HipagesLeadStatus {
+  AVAILABLE = 'AVAILABLE',
+  FIRST_TO_ACCEPT = 'FIRST_TO_ACCEPT',
+  WAITLIST = 'WAITLIST',
+  ACCEPTED = 'ACCEPTED',
+  EXPIRED = 'EXPIRED'
+}
+
+export interface HipagesLead {
+  id: string; // lead_id (UUID)
+  hipagesId: string; // hipages_id (unique identifier from hipages)
+  customerName: string;
+  suburb: string;
+  postcode?: string;
+  jobType: string;
+  jobSubtype?: string;
+  description?: string;
+  credits: number;
+  status: HipagesLeadStatus;
+  contactStatus?: string;
+  postedDate?: Date | string;
+  scrapedAt: number | Date;
+  syncedToCrm: boolean;
+  crmLeadId?: string; // Link to main leads table
+  rawData?: any; // Full hipages response for audit
+}
+
+/**
+ * hipages Scraper Types
+ */
+
+export enum HipagesLeadStatus {
+  AVAILABLE = 'AVAILABLE',
+  FIRST_TO_ACCEPT = 'FIRST_TO_ACCEPT',
+  WAITLIST = 'WAITLIST',
+  ACCEPTED = 'ACCEPTED',
+  EXPIRED = 'EXPIRED'
+}
+
+export interface HipagesLead {
+  id: string; // lead_id (UUID)
+  hipagesId: string; // hipages_id (unique identifier from hipages)
+  customerName: string;
+  suburb: string;
+  postcode?: string;
+  jobType: string;
+  jobSubtype?: string;
+  description?: string;
+  credits: number;
+  status: HipagesLeadStatus;
+  contactStatus?: string;
+  postedDate?: Date;
+  scrapedAt: number;
+  syncedToCrm: boolean;
+  crmLeadId?: string; // Link to main leads table
+  rawData?: any; // Full hipages response for audit
 }

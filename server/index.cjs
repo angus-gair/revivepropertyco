@@ -20,9 +20,37 @@ const quotesRouter = require('./api/quotes.cjs');
 const queueRouter = require('./api/queue.cjs');
 const notificationsRouter = require('./api/notifications.cjs');
 const crmRouter = require('./api/crm.cjs');
+const customerRouter = require('./api/customer.cjs');
+const customerDocumentsRouter = require('./api/customerDocuments.cjs');
+const customerQuotesRouter = require('./api/customerQuotes.cjs');
+const hipagesRouter = require('./api/hipages.cjs');
+const { subscribeToHipagesUpdates } = require('./lib/hipages-sync.cjs');
 
 const app = express();
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require('socket.io');
 const PORT = process.env.PORT || 8080;
+
+// Initialize Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production'
+      ? 'https://revivepropertyco.au'
+      : '*',
+    credentials: true
+  }
+});
+
+// Make io available to routes
+app.set('io', io);
+
+// Ensure uploads directory exists
+const uploadsDir = require('path').join(process.cwd(), 'uploads', 'customers');
+if (!require('fs').existsSync(uploadsDir)) {
+  require('fs').mkdirSync(uploadsDir, { recursive: true, mode: 0o755 });
+  console.log('✓ Created uploads directory:', uploadsDir);
+}
 
 // Middleware
 app.use(cors({
@@ -50,6 +78,10 @@ app.use('/api/quotes', quotesRouter);
 app.use('/api/queue', queueRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/crm', crmRouter);
+app.use('/api/customer', customerRouter);
+app.use('/api/customer', customerDocumentsRouter);
+app.use('/api/customer', customerQuotesRouter);
+app.use('/api/hipages', hipagesRouter);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -80,11 +112,17 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📅 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 API base URL: http://localhost:${PORT}`);
   console.log(`💚 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔌 Socket.IO initialized for real-time updates`);
+
+  // Subscribe to hipages updates after server starts
+  subscribeToHipagesUpdates(io).catch((error) => {
+    console.error('[sync] Failed to subscribe to hipages updates:', error);
+  });
 });
 
 module.exports = app;

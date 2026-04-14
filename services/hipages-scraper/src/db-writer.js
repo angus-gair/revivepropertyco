@@ -30,6 +30,10 @@ function generateHipagesId(lead) {
  * Normalize hipages status to database enum values
  */
 function normalizeStatus(status) {
+  if (!status) {
+    return 'AVAILABLE';
+  }
+
   const statusMap = {
     'Available': 'AVAILABLE',
     'First to accept': 'FIRST_TO_ACCEPT',

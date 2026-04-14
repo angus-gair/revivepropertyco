@@ -89,3 +89,12 @@ Production deployment uses multi-stage Docker build:
 ## Static Assets
 
 - `public/angus.png`, `public/family.png`: Static images (automatically copied to dist during build)
+
+
+
+
+# hipages Scraper Configuration
+HIPAGES_USERNAME=angus@ajinsights.com.au
+HIPAGES_PASSWORD=jamfinnarc1776!
+HIPAGES_HEADLESS=true
+CRON_SCHEDULE=0 */6 * * *

@@ -105,7 +105,7 @@ services:
           cpus: '1'
           memory: 1G
     healthcheck:
-      test: ["CMD", "node", "-e", "require('pg').Client(process.env.DATABASE_URL).connect()"]
+      test: ["CMD", "node", "-e", "new (require('pg').Client)(process.env.DATABASE_URL).connect().then(() => process.exit(0)).catch(() => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3

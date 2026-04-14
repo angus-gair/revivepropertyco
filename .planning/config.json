@@ -1,0 +1,250 @@
+{
+  "projectName": "Revive Property Co. Customer Portal",
+  "projectSlug": "revive-customer-portal",
+  "projectType": "brownfield-feature",
+  "initializedAt": "2026-04-13",
+  "lastUpdated": "2026-04-13",
+  "status": "active",
+  "currentPhase": "phase-1",
+  "version": "1.0.0",
+  "team": {
+    "lead": "Angus",
+    "members": [
+      "Angus"
+    ],
+    "stakeholders": [
+      "Angus"
+    ],
+    "contact": {
+      "lead": "ghost@razor-edge.tailfbe20e.ts.net"
+    }
+  },
+  "workflow": {
+    "type": "feature-development",
+    "methodology": "hybrid-agile",
+    "iterationLength": "1-week",
+    "standupFrequency": "as-needed",
+    "reviewFrequency": "end-of-phase",
+    "_auto_chain_active": false
+  },
+  "preferences": {
+    "deployment": {
+      "strategy": "local-dev-to-production",
+      "environments": [
+        "local",
+        "production"
+      ],
+      "requireTesting": true,
+      "requireApproval": false,
+      "deploymentDay": "friday",
+      "deploymentTime": "after-hours"
+    },
+    "development": {
+      "branching": "feature-branch",
+      "mainBranch": "main",
+      "featureBranchPattern": "feature/*",
+      "requireCodeReview": false,
+      "requireTests": false,
+      "commitStyle": "conventional-commits"
+    },
+    "documentation": {
+      "updateStrategy": "as-changes-are-made",
+      "requireChangeLog": false,
+      "requireReadmeUpdate": true,
+      "inlineComments": true
+    },
+    "communication": {
+      "preferredChannel": "terminal",
+      "asyncPreferred": true,
+      "standupFormat": "written",
+      "meetingFrequency": "as-needed"
+    },
+    "quality": {
+      "enforceTypeScript": true,
+      "enforceLinting": true,
+      "maxCodeComplexity": 10,
+      "requireErrorHandling": true,
+      "securityAuditRequired": true
+    }
+  },
+  "tools": {
+    "versionControl": {
+      "system": "git",
+      "platform": "local",
+      "repositoryPath": "/opt/homelab/apps/revivepropertyco"
+    },
+    "issueTracking": {
+      "system": "gsd-tasks",
+      "enabled": true
+    },
+    "documentation": {
+      "system": "markdown",
+      "location": ".planning/"
+    },
+    "testing": {
+      "framework": "manual",
+      "coverageTarget": 0,
+      "automatedTests": false
+    },
+    "deployment": {
+      "system": "docker-compose",
+      "orchestrator": "traefik",
+      "registry": "local"
+    }
+  },
+  "architecture": {
+    "type": "spa-with-bff",
+    "frontend": {
+      "framework": "React",
+      "language": "TypeScript",
+      "styling": "Tailwind CSS v4",
+      "buildTool": "Vite",
+      "router": "react-router-dom (HashRouter)"
+    },
+    "backend": {
+      "runtime": "Node.js",
+      "framework": "Express.js",
+      "language": "JavaScript (CommonJS)",
+      "database": "PostgreSQL",
+      "auth": "JWT + bcrypt"
+    },
+    "storage": {
+      "type": "local-filesystem",
+      "path": "uploads/customers/"
+    },
+    "deployment": {
+      "frontend": "nginx (static)",
+      "backend": "Express.js (container)"
+    }
+  },
+  "constraints": {
+    "timeline": {
+      "targetDate": "2026-05-04",
+      "phases": [
+        "phase-1"
+      ],
+      "bufferTime": "1-week"
+    },
+    "resources": {
+      "developers": 1,
+      "designers": 0,
+      "qa": 0,
+      "devops": 0
+    },
+    "scope": {
+      "fixed": true,
+      "flexibleFeatures": [],
+      "outOfScope": [
+        "communication-hub",
+        "video-consultations",
+        "payment-processing",
+        "mobile-app"
+      ]
+    },
+    "technical": {
+      "breakingChangesAllowed": false,
+      "refactoringAllowed": true,
+      "newDependenciesAllowed": true,
+      "databaseMigrationsAllowed": true
+    }
+  },
+  "riskManagement": {
+    "identifiedRisks": [
+      {
+        "risk": "File upload security vulnerabilities",
+        "likelihood": "medium",
+        "impact": "high",
+        "mitigation": "Strict validation, allowlist file types, sanitize filenames"
+      },
+      {
+        "risk": "Production deployment breaks existing site",
+        "likelihood": "low",
+        "impact": "critical",
+        "mitigation": "Thorough testing, rollback plan, deploy during low-traffic period"
+      },
+      {
+        "risk": "Customer adoption low",
+        "likelihood": "medium",
+        "impact": "high",
+        "mitigation": "User-friendly UI, clear onboarding, promote benefits"
+      }
+    ]
+  },
+  "successCriteria": {
+    "quantitative": {
+      "customerRegistrationRate": "20% of existing customers in first month",
+      "portalAdoption": "50% of new customers within 1 week",
+      "quoteApprovalTime": "50% reduction in time to approval",
+      "supportInquiries": "30% reduction in status update inquiries"
+    },
+    "qualitative": {
+      "uatFeedback": "Positive feedback from test participants",
+      "bugs": "No critical bugs in first 2 weeks",
+      "usability": "Customers report portal is easy to use"
+    }
+  },
+  "phaseDefinitions": {
+    "phase-1": {
+      "name": "MVP Core Features",
+      "status": "active",
+      "features": [
+        "customer-authentication",
+        "profile-management",
+        "document-management",
+        "quote-approval"
+      ],
+      "entryCriteria": [
+        "Database schema designed",
+        "API endpoints planned",
+        "UI mockups reviewed"
+      ],
+      "exitCriteria": [
+        "All core features functional",
+        "Security testing passed",
+        "UAT completed with positive feedback",
+        "Production deployment successful"
+      ],
+      "tasks": [
+        "database-setup",
+        "backend-auth-api",
+        "backend-documents-api",
+        "backend-quotes-api",
+        "frontend-auth-pages",
+        "frontend-dashboard",
+        "frontend-profile",
+        "frontend-documents",
+        "frontend-quotes",
+        "testing-qa",
+        "deployment",
+        "uat"
+      ]
+    },
+    "phase-2": {
+      "name": "Enhanced Features",
+      "status": "planned",
+      "features": [
+        "communication-hub",
+        "video-consultations",
+        "real-time-notifications"
+      ],
+      "entryCriteria": [
+        "Phase 1 completed",
+        "User feedback analyzed",
+        "Business priorities defined"
+      ],
+      "exitCriteria": [
+        "All Phase 2 features functional",
+        "User acceptance testing passed"
+      ]
+    }
+  },
+  "metadata": {
+    "codebaseMapped": true,
+    "existingConcerns": 17,
+    "techDebtItems": 8,
+    "securityIssues": 6,
+    "performanceBottlenecks": 4,
+    "estimatedPhase1Hours": 82,
+    "estimatedPhase1Weeks": 3
+  }
+}

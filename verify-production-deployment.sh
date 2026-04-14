@@ -132,8 +132,8 @@ test_realtime_sync() {
 check_database_connection() {
   echo -e "\n${YELLOW}Checking database connection from scraper container...${NC}"
 
-  # Test database connectivity from scraper container
-  DB_TEST=$(docker exec "$CONTAINER_NAME" node -e "require('pg').Client(process.env.DATABASE_URL).connect().then(() => console.log('OK')).catch(() => console.log('FAIL'))" 2>/dev/null || echo "FAIL")
+  # Test database connectivity from scraper container using same syntax as healthcheck
+  DB_TEST=$(docker exec "$CONTAINER_NAME" node -e "new (require('pg').Client)(process.env.DATABASE_URL).connect().then(() => console.log('OK')).catch(() => console.log('FAIL'))" 2>/dev/null || echo "FAIL")
 
   if [ "$DB_TEST" = "OK" ]; then
     echo -e "${GREEN}✓ Scraper can connect to database${NC}"

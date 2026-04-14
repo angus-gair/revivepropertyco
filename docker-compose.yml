@@ -1,6 +1,8 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: revivepropertyco
     restart: unless-stopped
     environment:
@@ -46,8 +48,76 @@ services:
       # Service
       - "traefik.http.services.revivepropertyco.loadbalancer.server.port=80"
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: revivepropertyco-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - DATABASE_URL=postgresql://homelab:BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg@postgres:5432/revivepropertyco
+      - JWT_SECRET=revive-property-jwt-secret-2026-production-secure
+      - RESEND_API_KEY=re_HhXXXXXX
+      - RESEND_FROM=Revive Property Co. <info@revivepropertyco.au>
+
+    networks:
+      - homelab_web
+      - traefik-public
+      - homelab_internal
+
+    volumes:
+      - customer-uploads:/app/uploads/customers
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+
+      # HTTPS API router
+      - "traefik.http.routers.revivepropertyco-api.rule=Host(`revivepropertyco.au`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.revivepropertyco-api.entrypoints=websecure"
+      - "traefik.http.routers.revivepropertyco-api.tls.certresolver=cloudflare"
+
+      # Service
+      - "traefik.http.services.revivepropertyco-api.loadbalancer.server.port=8080"
+
+  hipages-scraper:
+    build:
+      context: ./services/hipages-scraper
+      dockerfile: Dockerfile
+    container_name: revive-hipages-scraper
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - HIPAGES_USERNAME=${HIPAGES_USERNAME}
+      - HIPAGES_PASSWORD=${HIPAGES_PASSWORD}
+      - HIPAGES_HEADLESS=true
+      - CRON_SCHEDULE=0 */6 * * *
+    networks:
+      - homelab_internal
+    volumes:
+      - hipages-output:/app/output
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('pg').Client(process.env.DATABASE_URL).connect()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  customer-uploads:
+  hipages-output:
+
 networks:
   homelab_web:
     external: true
   traefik-public:
+    external: true
+  homelab_internal:
     external: true

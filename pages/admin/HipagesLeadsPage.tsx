@@ -39,6 +39,45 @@ const HipagesLeadsPage: React.FC = () => {
     loadData();
   }, []);
 
+  // WebSocket for real-time updates
+  useEffect(() => {
+    const wsUrl = import.meta.env.PROD
+      ? 'wss://revivepropertyco.au'
+      : 'ws://localhost:8080';
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('[WebSocket] Connected to hipages updates');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'hipages:leadsUpdated') {
+          console.log('[WebSocket] Received hipages update:', data.payload);
+          setNewLeadsCount(data.payload.count || 0);
+          loadData(); // Refresh data
+          // Auto-dismiss badge after 5 seconds
+          setTimeout(() => setNewLeadsCount(0), 5000);
+        }
+      } catch (e) {
+        console.error('[WebSocket] Error parsing message:', e);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('[WebSocket] Error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('[WebSocket] Connection closed');
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
       const matchesStatus = statusFilter === 'ALL' || lead.status === statusFilter;

@@ -1,0 +1,7 @@
+services:
+  hipages-scraper:
+    environment:
+      - RUN_ON_STARTUP=true  # Run scrape on container start for testing
+      - HIPAGES_HEADLESS=false  # Show browser for debugging (can override with true)
+    volumes:
+      - ./services/hipages-scraper/src:/app/src:ro  # Mount source for hot-reload during dev

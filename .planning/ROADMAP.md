@@ -808,6 +808,35 @@ This roadmap outlines the phased implementation of the Customer Portal feature f
 
 ---
 
+## Phase 05: Historical Leads Extraction & UI Toggle
+
+**Timeline:** 1-2 days (after Phase 04 completion)
+**Goal:** Enhance scraper to extract all historical leads (not just today's) and add UI toggle for "Last 50" vs "All Time" view.
+
+**Status:** 📝 Planned
+
+**Purpose:** Current scraper only captures ~50 leads from today. Need to extract all available historical leads and provide UI control for viewing datasets of different sizes.
+
+**Requirements:** Historical lead extraction, pagination/scrolling logic, UI toggle component, backend API limit parameter support
+
+**Depends on:** Phase 04 (hipages scraper integration complete)
+
+**Plans:** 3 plans in 3 waves
+
+Plans:
+- [ ] 05-01-PLAN.md — Scraper enhancement for pagination/historical extraction
+- [ ] 05-02-PLAN.md — Backend API limit parameter and frontend UI toggle
+- [ ] 05-03-PLAN.md — Deployment, monitoring, and documentation
+
+**Success Criteria:**
+- Scraper extracts leads beyond first page (pagination/scrolling works)
+- Database contains leads from multiple dates (historical data)
+- UI toggle allows switching between "Last 50" and "All Time" views
+- Performance acceptable (<2s for Last 50, <10s for All Time)
+- No hipages account restrictions triggered
+
+---
+
 ## Dependencies and Blockers
 
 **External Dependencies:**

@@ -37,16 +37,6 @@ function parseLeadsFromText(pageText, pageHtml = null) {
     phoneNumbers = [...new Set([...phoneNumbers, ...textPhones])];
   }
 
-  // Extract image URLs from HTML if provided
-  let images = [];
-  if (pageHtml) {
-    // Find hipages attachment images
-    const imgMatches = pageHtml.match(/https:\/\/img\.hipages\.com\.au\/[^\s"<>]+?\.(?:jpg|jpeg|png|webp)/gi) || [];
-    // Find attachment URLs
-    const attachmentMatches = pageHtml.match(/https:\/\/attachments\.hipagesusercontent\.com\/[^\s"<>]+/gi) || [];
-    images = [...new Set([...imgMatches, ...attachmentMatches])];
-  }
-
   // Split by credit indicators (e.g., "21 credits", "8 credits")
   // This is a reliable separator between leads
   const creditPattern = /(\d+)\s+credits/g;
@@ -191,7 +181,7 @@ function parseLeadsFromText(pageText, pageHtml = null) {
     });
   }
 
-  return { leads, phoneNumbers, images };
+  return { leads, phoneNumbers };
 }
 
 /**
@@ -356,20 +346,115 @@ async function runScrape() {
       // Get HTML for phone/image extraction
       const pageHtml = await page.content();
 
-      console.log(`[scraper] ${pageName} page title: ${pageData.title}`);
+      // Debug: Save HTML to file for inspection
+      if (pageName === 'leads') {
+        const fs = require('fs');
+        const path = require('path');
+        const debugDir = path.join(__dirname, '../output');
+        if (!fs.existsSync(debugDir)) {
+          fs.mkdirSync(debugDir, { recursive: true });
+        }
+        fs.writeFileSync(path.join(debugDir, `debug-${Date.now()}.html`), pageHtml);
+        console.log(`[scraper] Saved HTML for debugging`);
+      }
 
-      // Parse leads with HTML context
-      const { leads, phoneNumbers, images } = parseLeadsFromText(pageData.allText, pageHtml);
+      // Extract lead data with images from DOM structure
+      const leadsWithImages = await page.evaluate(() => {
+        const leads = [];
+
+        // Find all lead containers
+        // Hipages uses various container structures - try multiple selectors
+        const leadContainers = document.querySelectorAll('[data-testid*="lead"], .lead-card, [class*="lead"], [class*="Lead"]');
+
+        console.log(`Found ${leadContainers.length} lead containers`);
+
+        leadContainers.forEach(container => {
+          try {
+            // Extract lead identifier
+            const nameEl = container.querySelector('[class*="name"], [class*="customer"], [class*="Name"]');
+            const name = nameEl?.textContent?.trim() || '';
+
+            // Extract image URLs from this container
+            const images = [];
+            const imgEls = container.querySelectorAll('img[src*="hipages"], img[src*="attachment"]');
+            imgEls.forEach(img => {
+              const src = img.getAttribute('src');
+              if (src && (src.includes('hipages.com.au') || src.includes('hipagesusercontent.com'))) {
+                images.push(src);
+              }
+            });
+
+            // Also check for background images or other image sources
+            const elementsWithBg = container.querySelectorAll('*[style*="background-image"]');
+            elementsWithBg.forEach(el => {
+              const style = el.getAttribute('style');
+              const urlMatch = style?.match(/url\(['"]?([^'")\s]+)['"]?\)/);
+              if (urlMatch && urlMatch[1]) {
+                const url = urlMatch[1];
+                if (url.includes('hipages.com.au') || url.includes('hipagesusercontent.com')) {
+                  images.push(url);
+                }
+              }
+            });
+
+            if (name && images.length > 0) {
+              leads.push({
+                name,
+                images: [...new Set(images)] // Deduplicate
+              });
+            }
+          } catch (e) {
+            console.log('Error processing container:', e);
+          }
+        });
+
+        return { leads, totalContainers: leadContainers.length };
+      });
+
+      console.log(`[scraper] ${pageName} page title: ${pageData.title}`);
+      console.log(`[scraper] Extracted ${leadsWithImages.leads.length} leads with images from DOM (out of ${leadsWithImages.totalContainers} containers)`);
+
+      // Parse leads with HTML context (original logic)
+      const { leads, phoneNumbers } = parseLeadsFromText(pageData.allText, pageHtml);
+
+      // Also extract all hipages images from page HTML (fallback approach)
+      // Match both direct attachment URLs and img.hipages.com.au proxy URLs
+      const allPageImages = [
+        ...(pageHtml.match(/https:\/\/attachments\.hipagesusercontent\.com\/[a-zA-Z0-9\/_-]+/gi) || []),
+        ...(pageHtml.match(/https:\/\/img\.hipages\.com\.au\/[^"<>]+/gi) || [])
+      ];
+      // Deduplicate
+      const uniqueImages = [...new Set(allPageImages)];
+      console.log(`[scraper] Found ${uniqueImages.length} hipages image URLs in page HTML`);
+
+      // Merge image data from DOM extraction into parsed leads
+      let imageIndex = 0;
+      leads.forEach(lead => {
+        // Find matching lead from DOM extraction by name
+        const matchingLead = leadsWithImages.leads.find(domLead =>
+          domLead.name === lead.customer_name ||
+          domLead.name.includes(lead.customer_name || '') ||
+          (lead.customer_name || '').includes(domLead.name)
+        );
+
+        if (matchingLead && matchingLead.images.length > 0) {
+          lead.images = matchingLead.images;
+          console.log(`[scraper] Attached ${matchingLead.images.length} images to lead: ${lead.customer_name}`);
+        } else if (lead.attachment_count > 0 && uniqueImages.length > 0) {
+          // Fallback: If lead has attachments but no DOM images, assign images from page
+          // Assign images sequentially based on attachment_count
+          const assignedImages = uniqueImages.slice(imageIndex, imageIndex + lead.attachment_count);
+          imageIndex += lead.attachment_count;
+          lead.images = assignedImages;
+          console.log(`[scraper] Attached ${lead.images.length} page-level images to lead: ${lead.customer_name} (fallback)`);
+        } else {
+          lead.images = [];
+        }
+      });
 
       console.log(`[scraper] Found ${leads.length} leads on ${pageName}`);
-      if (phoneNumbers.length > 0) {
-        console.log(`[scraper] Found ${phoneNumbers.length} phone numbers`);
-      }
-      if (images.length > 0) {
-        console.log(`[scraper] Found ${images.length} images/attachments`);
-      }
 
-      return { leads, phoneNumbers, images };
+      return { leads, phoneNumbers };
     }
 
     // Scrape /leads page

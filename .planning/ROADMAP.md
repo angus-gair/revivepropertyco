@@ -906,6 +906,16 @@ Plans:
 - [x] 04-05-PLAN.md — Docker Compose integration and environment configuration
 - [x] 04-06-PLAN.md — Production deployment, verification, and cleanup
 
+### Phase 6: hipages jobs and leads integration with visual testing dashboard
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 5
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 6 to break down)
+
 ---
 
 *Roadmap version 1.0 - 2026-04-13*

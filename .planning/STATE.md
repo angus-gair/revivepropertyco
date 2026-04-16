@@ -554,6 +554,28 @@ UPLOAD_DIR=uploads/customers
 
 ## Change Log
 
+### 2026-04-14
+
+**Event:** hipages Lead Scraper Integration Complete
+**Changes:**
+
+- Migrated hipages scraper from `/home/ghost/hipages` to integrated microservice
+- Created `services/hipages-scraper/` with Playwright automation
+- Created `server/api/hipages.cjs` for admin API endpoints
+- Created `server/lib/hipages-sync.cjs` for PostgreSQL LISTEN/NOTIFY real-time sync
+- Created `pages/admin/HipagesLeadsPage.tsx` dashboard with WebSocket updates
+- Added `server/migrations/002_create_hipages_leads_table.sql` database schema
+- Deployed production hipages-scraper container to Docker Compose
+- Configured cron schedule (6-hour intervals) for automatic scraping
+- Removed old `/home/ghost/hipages` project (backed up to `/home/ghost/hipages.backup.20260414_021959`)
+- Created `verify-production-deployment.sh` for ongoing health checks
+- Successfully scraped and stored 50+ hipages leads in production
+- Real-time sync verified: NOTIFY → Backend → WebSocket → Dashboard
+
+**Impact:** Production hipages scraper fully integrated, old POC project retired, automated lead capture operational
+
+---
+
 ### 2026-04-13
 
 **Event:** Project initialization
@@ -575,6 +597,7 @@ UPLOAD_DIR=uploads/customers
 ### Roadmap Evolution
 
 - **Phase 4 added:** Integrate hipages lead scraper with real-time data sync (2026-04-13)
+- **Phase 6 added:** hipages jobs and leads integration with visual testing dashboard (2026-04-16)
 
 ---
 

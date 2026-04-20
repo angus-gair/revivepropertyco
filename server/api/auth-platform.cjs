@@ -13,7 +13,8 @@ const router = express.Router();
 /**
  * POST /api/auth/platform/login
  * Authenticate tenant user and return JWT with tenant claims
- * Body: { email, password } - Email is tenant-scoped login
+ * Body: { email, password }
+ * Headers: { X-Tenant-Slug } - Required for multi-tenant isolation (WR-01 fix)
  */
 router.post('/login', async (req, res) => {
   try {
@@ -27,16 +28,24 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Find user by email (returns first matching email - TODO: add tenant/subdomain context for multi-tenant login)
+    // Require tenant context for multi-tenant isolation (WR-01 fix)
+    const tenantSlug = req.headers['x-tenant-slug'];
+    if (!tenantSlug) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tenant context required. Include X-Tenant-Slug header.'
+      });
+    }
+
+    // Find user by email within specific tenant
     const result = await query(
       `SELECT tu.id, tu.tenant_id, tu.email, tu.password_hash, tu.role,
               tu.first_name, tu.last_name, tu.status,
               t.slug as tenant_slug, t.name as tenant_name
        FROM tenant_users tu
        JOIN tenants t ON tu.tenant_id = t.id
-       WHERE tu.email = $1 AND tu.status = 'ACTIVE'
-       LIMIT 1`,
-      [email]
+       WHERE tu.email = $1 AND t.slug = $2 AND tu.status = 'ACTIVE'`,
+      [email, tenantSlug]
     );
 
     if (result.rows.length === 0) {

@@ -8,10 +8,13 @@
 -- CREATE APP_USER ROLE (PCORE-06)
 -- ============================================================================
 -- Non-superuser role for application queries (RLS requires non-superuser)
+-- WR-04 fix: Remove hardcoded password - use password authentication from environment
+-- The app_user password should be set via environment or manually in production:
+-- ALTER ROLE app_user WITH PASSWORD '<strong-password>';
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'app_user') THEN
-    CREATE ROLE app_user WITH LOGIN PASSWORD 'change-me-in-production';
+    EXECUTE format('CREATE ROLE app_user WITH LOGIN');
   END IF;
 END
 $$;

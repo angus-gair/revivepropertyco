@@ -7,7 +7,7 @@ interface TenantAuthContextType {
   token: string | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string, tenantSlug?: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string; user?: TenantUser; tenant?: Tenant }>;
   logout: () => void;
   refreshAuth: () => Promise<void>;
@@ -69,12 +69,22 @@ export const TenantAuthProvider: React.FC<{ children: ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (email: string, password: string, tenantSlug?: string): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
     try {
+      // Get tenantSlug from stored tenant if not provided
+      const targetSlug = tenantSlug || tenant?.slug;
+      if (!targetSlug) {
+        setLoading(false);
+        return { success: false, error: 'Tenant context required. Please provide your tenant slug.' };
+      }
+
       const response = await fetch(`${PLATFORM_API_BASE}/api/auth/platform/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Tenant-Slug': targetSlug
+        },
         body: JSON.stringify({ email, password })
       });
 

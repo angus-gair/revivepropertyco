@@ -1,18 +1,30 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Building2, Mail, Lock } from 'lucide-react';
+import { Building2, Mail, Lock, Globe } from 'lucide-react';
 import { useTenantAuth } from '../../contexts/TenantAuthContext';
+
+interface LocationState {
+  from?: { pathname: string };
+}
 
 const LoginPlatformPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [tenantSlug, setTenantSlug] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { login } = useTenantAuth();
+  const { login, tenant } = useTenantAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state as any)?.from?.pathname || '/platform/dashboard';
+  const from = (location.state as LocationState)?.from?.pathname || '/platform/dashboard';
+
+  // Pre-fill tenant slug if already authenticated
+  React.useEffect(() => {
+    if (tenant?.slug) {
+      setTenantSlug(tenant.slug);
+    }
+  }, [tenant]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +37,14 @@ const LoginPlatformPage: React.FC = () => {
       return;
     }
 
+    if (!tenantSlug) {
+      setError('Tenant slug is required');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const result = await login(email, password);
+      const result = await login(email, password, tenantSlug);
       if (result.success) {
         navigate(from, { replace: true });
       } else {
@@ -67,6 +85,29 @@ const LoginPlatformPage: React.FC = () => {
           )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Tenant Slug */}
+            <div>
+              <label htmlFor="tenantSlug" className="block text-sm font-medium text-slate-700">
+                Tenant slug
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Globe className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  id="tenantSlug"
+                  name="tenantSlug"
+                  type="text"
+                  autoComplete="organization"
+                  required
+                  value={tenantSlug}
+                  onChange={(e) => setTenantSlug(e.target.value)}
+                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-slate-300 rounded-md"
+                  placeholder="your-tenant"
+                />
+              </div>
+            </div>
+
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700">

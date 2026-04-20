@@ -1,0 +1,8 @@
+{
+  "name": "core",
+  "version": "1.0.0",
+  "routePrefix": "/api/core",
+  "dependencies": [],
+  "description": "Core platform module with tenant settings and basic APIs",
+  "entitlementRequired": false
+}

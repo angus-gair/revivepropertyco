@@ -39,8 +39,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   - [x] 01-01-PLAN.md — Create database schema with platform tables and RLS policies
   - [x] 01-02-PLAN.md — Create tenant-aware authentication library with AsyncLocalStorage context
 - Wave 2 (parallel):
-  - [ ] 01-03-PLAN.md — Create tenant registration and authentication API endpoints
-  - [ ] 01-04-PLAN.md — Create module discovery and registration system
+  - [x] 01-03-PLAN.md — Create tenant registration and authentication API endpoints
+  - [x] 01-04-PLAN.md — Create module discovery and registration system
 - Wave 3 (parallel):
   - [ ] 01-05-PLAN.md — Create team member invitation API
   - [ ] 01-06-PLAN.md — Create tenant authentication UI with registration, login, dashboard

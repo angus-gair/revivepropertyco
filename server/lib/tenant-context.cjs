@@ -25,11 +25,14 @@ function getTenantContext() {
 /**
  * Express middleware to extract tenant from JWT and store in AsyncLocalStorage
  * Must be used AFTER authenticateTenantToken middleware
+ * Sets PostgreSQL session variables for RLS policies (WR-02 fix)
  * @param {object} req - Express request
  * @param {object} res - Express response
  * @param {function} next - Express next callback
  */
-function tenantMiddleware(req, res, next) {
+async function tenantMiddleware(req, res, next) {
+  const { query } = require('./database.cjs');
+
   const tenantData = {
     tenantId: req.user?.tenantId,
     tenantSlug: req.user?.tenantSlug,
@@ -37,12 +40,19 @@ function tenantMiddleware(req, res, next) {
     role: req.user?.role
   };
 
-  tenantContext.run(tenantData, () => {
-    // Set PostgreSQL session variable for RLS policies
-    if (tenantData.tenantId) {
-      // Store in AsyncLocalStorage for app-layer access
-      // PostgreSQL session variable set per-request in database queries
+  // Set PostgreSQL session variables for RLS policies before processing request
+  if (tenantData.tenantId) {
+    try {
+      await query('SELECT set_config($1, $2, true)', ['app.current_tenant', tenantData.tenantId]);
+      if (tenantData.role) {
+        await query('SELECT set_config($1, $2, true)', ['app.user_role', tenantData.role]);
+      }
+    } catch (error) {
+      console.error('Failed to set tenant context:', error);
     }
+  }
+
+  tenantContext.run(tenantData, () => {
     next();
   });
 }

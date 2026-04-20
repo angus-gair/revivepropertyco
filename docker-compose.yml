@@ -39,6 +39,7 @@ services:
       - "traefik.http.routers.revivepropertyco.rule=Host(`revivepropertyco.au`)"
       - "traefik.http.routers.revivepropertyco.entrypoints=websecure"
       - "traefik.http.routers.revivepropertyco.tls.certresolver=cloudflare"
+      - "traefik.http.routers.revivepropertyco.priority=50"
 
       # www -> apex redirect middleware
       - "traefik.http.middlewares.www-to-apex.redirectregex.regex=^https://www\\.revivepropertyco\\.au/(.*)"
@@ -78,6 +79,18 @@ services:
       - "traefik.http.routers.revivepropertyco-api.rule=Host(`revivepropertyco.au`) && PathPrefix(`/api`)"
       - "traefik.http.routers.revivepropertyco-api.entrypoints=websecure"
       - "traefik.http.routers.revivepropertyco-api.tls.certresolver=cloudflare"
+      - "traefik.http.routers.revivepropertyco-api.priority=100"
+
+      # HTTPS Socket.IO router (WebSocket support)
+      - "traefik.http.routers.revivepropertyco-socketio.rule=Host(`revivepropertyco.au`) && PathPrefix(`/socket.io`)"
+      - "traefik.http.routers.revivepropertyco-socketio.entrypoints=websecure"
+      - "traefik.http.routers.revivepropertyco-socketio.tls.certresolver=cloudflare"
+      - "traefik.http.routers.revivepropertyco-socketio.middlewares=websocket-headers"
+      - "traefik.http.routers.revivepropertyco-socketio.priority=100"
+
+      # WebSocket headers middleware
+      - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Upgrade=websocket"
+      - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Connection=Upgrade"
 
       # Service
       - "traefik.http.services.revivepropertyco-api.loadbalancer.server.port=8080"
@@ -110,9 +123,117 @@ services:
       timeout: 10s
       retries: 3
 
+  hipages-scraper:
+    build:
+      context: ./services/hipages-scraper
+      dockerfile: Dockerfile
+    container_name: revive-hipages-scraper
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - HIPAGES_USERNAME=${HIPAGES_USERNAME}
+      - HIPAGES_PASSWORD=${HIPAGES_PASSWORD}
+      - HIPAGES_HEADLESS=true
+      - CRON_SCHEDULE=0 */6 * * *
+    networks:
+      - homelab_internal
+    volumes:
+      - hipages-output:/app/output
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "node", "-e", "new (require('pg').Client)(process.env.DATABASE_URL).connect().then(() => process.exit(0)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Twenty CRM Services
+  twenty-db:
+    image: postgres:15-alpine
+    container_name: twenty-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=twenty
+      - POSTGRES_PASSWORD=${TWENTY_DB_PASSWORD}
+      - POSTGRES_DB=twenty_crms
+    volumes:
+      - twenty-data:/var/lib/postgresql/data
+    networks:
+      - homelab_internal
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "twenty"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  twenty-redis:
+    image: redis:7-alpine
+    container_name: twenty-redis
+    restart: unless-stopped
+    volumes:
+      - twenty-redis:/data
+    networks:
+      - homelab_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  twenty-server:
+    image: twentycrm/twenty:v1.22.6
+    container_name: twenty-server
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://twenty:${TWENTY_DB_PASSWORD}@twenty-db:5432/twenty_crms
+      - REDIS_URL=redis://twenty-redis:6379
+      - SERVER_URL=${TWENTY_SERVER_URL}
+      - FRONT_BASE_URL=${TWENTY_SERVER_URL}
+      - APP_SECRET=${TWENTY_APP_SECRET}
+    depends_on:
+      twenty-db:
+        condition: service_healthy
+      twenty-redis:
+        condition: service_healthy
+    networks:
+      - homelab_internal
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.twenty-crm.rule=Host(`crm.revivepropertyco.au`)"
+      - "traefik.http.routers.twenty-crm.entrypoints=websecure"
+      - "traefik.http.routers.twenty-crm.tls.certresolver=cloudflare"
+      - "traefik.http.services.twenty-crm.loadbalancer.server.port=3000"
+
+  twenty-worker:
+    image: twentycrm/twenty:v1.22.6
+    container_name: twenty-worker
+    restart: unless-stopped
+    command: ["node", "dist/src/queue-worker/queue-worker"]
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://twenty:${TWENTY_DB_PASSWORD}@twenty-db:5432/twenty_crms
+      - REDIS_URL=redis://twenty-redis:6379
+      - SERVER_URL=${TWENTY_SERVER_URL}
+      - APP_SECRET=${TWENTY_APP_SECRET}
+    depends_on:
+      - twenty-db
+      - twenty-redis
+      - twenty-server
+    networks:
+      - homelab_internal
+
 volumes:
   customer-uploads:
   hipages-output:
+  twenty-data:
+  twenty-redis:
 
 networks:
   homelab_web:

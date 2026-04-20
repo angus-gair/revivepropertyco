@@ -4,11 +4,29 @@
  */
 
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const { query } = require('../lib/database.cjs');
 const { verifyTenantUser, generateTenantToken, comparePassword, authenticateTenantToken } = require('../lib/auth-platform.cjs');
 const { tenantMiddleware } = require('../lib/tenant-context.cjs');
 
 const router = express.Router();
+
+// Rate limiting for authentication endpoints (WR-05 fix)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per window
+  message: 'Too many authentication attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const registrationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 registrations per hour
+  message: 'Too many registration attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * POST /api/auth/platform/login
@@ -16,7 +34,7 @@ const router = express.Router();
  * Body: { email, password }
  * Headers: { X-Tenant-Slug } - Required for multi-tenant isolation (WR-01 fix)
  */
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 

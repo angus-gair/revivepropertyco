@@ -4,18 +4,28 @@
  */
 
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const { query, transaction } = require('../lib/database.cjs');
 const { generateTenantToken, hashPassword, comparePassword } = require('../lib/auth-platform.cjs');
 const { getTenantId } = require('../lib/tenant-context.cjs');
 
 const router = express.Router();
 
+// Rate limiting for registration endpoint (WR-05 fix)
+const registrationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 registrations per hour
+  message: 'Too many registration attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /**
  * POST /api/platform/register
  * Register a new tenant (business) and create owner user
  * Body: { name, slug, ownerEmail, ownerPassword, firstName, lastName }
  */
-router.post('/register', async (req, res) => {
+router.post('/register', registrationLimiter, async (req, res) => {
   try {
     const { name, slug, ownerEmail, ownerPassword, firstName, lastName } = req.body;
 

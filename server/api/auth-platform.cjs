@@ -66,19 +66,15 @@ router.post('/login', authLimiter, async (req, res) => {
       [email, tenantSlug]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid credentials'
-      });
-    }
+    // Use constant-time comparison to prevent timing attacks (WR-06 fix)
+    // Always run bcrypt.compare even when user is not found
+    const dummyHash = '$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; // dummy hash for timing safety
+    const user = result.rows.length > 0 ? result.rows[0] : null;
+    const passwordMatch = user
+      ? await comparePassword(password, user.password_hash)
+      : await comparePassword(password, dummyHash);
 
-    const user = result.rows[0];
-
-    // Verify password
-    const passwordMatch = await comparePassword(password, user.password_hash);
-
-    if (!passwordMatch) {
+    if (!passwordMatch || !user) {
       return res.status(401).json({
         success: false,
         error: 'Invalid credentials'

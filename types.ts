@@ -181,6 +181,61 @@ export enum CustomerAuditAction {
 }
 
 /**
+ * Platform / Multi-Tenant Types
+ */
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  plan: 'free_trial' | 'growth' | 'enterprise';
+  status: 'ACTIVE' | 'SUSPENDED' | 'TRIAL_EXPIRED';
+  createdAt: string;
+}
+
+export interface TenantUser {
+  id: string;
+  tenantId: string;
+  email: string;
+  role: 'owner' | 'admin' | 'member';
+  firstName?: string;
+  lastName?: string;
+  status: 'ACTIVE' | 'INVITED' | 'SUSPENDED';
+  lastLoginAt?: string;
+  createdAt: string;
+}
+
+export interface TenantInvitation {
+  id: string;
+  tenantId: string;
+  email: string;
+  role: 'admin' | 'member';
+  invitedBy: string;
+  token: string;
+  acceptedAt?: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface TenantModule {
+  name: string;
+  version: string;
+  description: string;
+  routePrefix: string;
+  dependencies: string[];
+  active: boolean;
+  activatedAt?: string;
+}
+
+export interface TenantAuthState {
+  user: TenantUser | null;
+  tenant: Tenant | null;
+  token: string | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+}
+
+/**
  * hipages Scraper Types
  */
 
@@ -212,32 +267,89 @@ export interface HipagesLead {
 }
 
 /**
- * hipages Scraper Types
+ * Twenty CRM Integration Types
  */
 
-export enum HipagesLeadStatus {
-  AVAILABLE = 'AVAILABLE',
-  FIRST_TO_ACCEPT = 'FIRST_TO_ACCEPT',
-  WAITLIST = 'WAITLIST',
-  ACCEPTED = 'ACCEPTED',
-  EXPIRED = 'EXPIRED'
+export interface TwentyWorkspace {
+  id: string;
+  tenantId: string; // Link to platform tenant
+  name: string;
+  slug: string;
+  serverUrl: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface HipagesLead {
-  id: string; // lead_id (UUID)
-  hipagesId: string; // hipages_id (unique identifier from hipages)
-  customerName: string;
-  suburb: string;
-  postcode?: string;
-  jobType: string;
-  jobSubtype?: string;
+export interface TwentyServiceJob {
+  id: string;
+  name: string;
   description?: string;
-  credits: number;
-  status: HipagesLeadStatus;
-  contactStatus?: string;
-  postedDate?: Date;
-  scrapedAt: number;
-  syncedToCrm: boolean;
-  crmLeadId?: string; // Link to main leads table
-  rawData?: any; // Full hipages response for audit
+  status: 'NEW' | 'CONTACTED' | 'BOOKED' | 'ARCHIVED';
+  personId?: string; // Link to Twenty Person
+  workspaceId: string;
+  createdAt: string;
+  updatedAt: string;
+  // Custom fields (metadata stored in Twenty)
+  serviceType?: string;
+  address?: string;
+  originalLeadId?: string;
+}
+
+export interface TwentyPerson {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  workspaceId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TwentyQuote {
+  id: string;
+  name: string;
+  serviceJobId?: string; // Link to TwentyServiceJob
+  status: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
+  totalAmount: number;
+  expiryDate?: string;
+  workspaceId: string;
+  createdAt: string;
+  updatedAt: string;
+  lineItems?: TwentyQuoteLineItem[];
+}
+
+export interface TwentyQuoteLineItem {
+  id?: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface TwentyHipagesLead extends TwentyServiceJob {
+  sourceUrl?: string;
+  postedDate?: string;
+  scrapedAt?: string;
+  hipagesStatus?: string;
+  credits?: number;
+}
+
+export interface TwentyWebhookEvent {
+  event: string; // e.g., 'person.created', 'serviceJob.updated'
+  data: any;
+  timestamp: string;
+  workspaceId?: string;
+}
+
+export interface TenantTwentyToken {
+  id: string;
+  tenantId: string;
+  workspaceId: string;
+  tokenType: 'API' | 'WEBHOOK';
+  encryptedToken: string;
+  tokenLabel?: string;
+  lastUsedAt?: string;
+  expiresAt?: string;
+  createdAt: string;
 }

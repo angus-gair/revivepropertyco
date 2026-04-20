@@ -32,7 +32,18 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Platform discovers and registers modules automatically at startup via manifest system
   4. Tenant owner can invite team members with role-based permissions
   5. New tenant provisioning creates default seed data (pipeline stages, categories)
-**Plans**: TBD
+**Plans**: 6 plans in 3 waves
+
+**Plan Breakdown:**
+- Wave 1 (parallel):
+  - [ ] 01-01-PLAN.md — Create database schema with platform tables and RLS policies
+  - [ ] 01-02-PLAN.md — Create tenant-aware authentication library with AsyncLocalStorage context
+- Wave 2 (parallel):
+  - [ ] 01-03-PLAN.md — Create tenant registration and authentication API endpoints
+  - [ ] 01-04-PLAN.md — Create module discovery and registration system
+- Wave 3 (parallel):
+  - [ ] 01-05-PLAN.md — Create team member invitation API
+  - [ ] 01-06-PLAN.md — Create tenant authentication UI with registration, login, dashboard
 
 ### Phase 2: Twenty CRM Integration
 **Goal**: Platform uses self-hosted Twenty CRM as central data hub with all existing data migrated
@@ -115,7 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Platform Core & Authentication | 0/0 | Not started | - |
+| 1. Platform Core & Authentication | 0/6 | Ready to execute | - |
 | 2. Twenty CRM Integration | 0/0 | Not started | - |
 | 3. Hipages Leads Module | 0/0 | Not started | - |
 | 4. AI Quotes Module | 0/0 | Not started | - |

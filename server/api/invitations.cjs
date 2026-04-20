@@ -120,7 +120,9 @@ router.post('/invite', authenticateTenantToken, tenantMiddleware, async (req, re
     const invitation = result.rows[0];
 
     // TODO: Send invitation email (deferred to Phase 7 with billing integration)
-    // For now, return the token for testing purposes
+    // Expose token only when explicitly enabled (never in production) - WR-08 fix
+    const exposeToken = process.env.EXPOSE_INVITATION_TOKENS === 'true' && process.env.NODE_ENV !== 'production';
+
     res.status(201).json({
       success: true,
       message: 'Invitation created successfully',
@@ -129,8 +131,7 @@ router.post('/invite', authenticateTenantToken, tenantMiddleware, async (req, re
         email: invitation.email,
         role: invitation.role,
         expiresAt: invitation.expires_at,
-        // Only return token in development for testing
-        ...(process.env.NODE_ENV === 'development' && { token })
+        token: exposeToken ? token : undefined
       }
     });
   } catch (error) {

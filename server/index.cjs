@@ -26,6 +26,7 @@ const customerQuotesRouter = require('./api/customerQuotes.cjs');
 const hipagesRouter = require('./api/hipages.cjs');
 const platformRouter = require('./api/platform.cjs');
 const authPlatformRouter = require('./api/auth-platform.cjs');
+const invitationsRouter = require('./api/invitations.cjs');
 const { subscribeToHipagesUpdates } = require('./lib/hipages-sync.cjs');
 
 const app = express();
@@ -87,6 +88,8 @@ app.use('/api/hipages', hipagesRouter);
 // Platform API routes (multi-tenant)
 app.use('/api/platform', platformRouter);
 app.use('/api/auth/platform', authPlatformRouter);
+// Team invitations API
+app.use('/api/invitations', invitationsRouter);
 
 // Health check
 app.get('/health', (req, res) => {

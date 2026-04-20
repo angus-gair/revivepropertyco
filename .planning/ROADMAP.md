@@ -42,8 +42,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   - [x] 01-03-PLAN.md — Create tenant registration and authentication API endpoints
   - [x] 01-04-PLAN.md — Create module discovery and registration system
 - Wave 3 (parallel):
-  - [ ] 01-05-PLAN.md — Create team member invitation API
-  - [ ] 01-06-PLAN.md — Create tenant authentication UI with registration, login, dashboard
+  - [x] 01-05-PLAN.md — Create team member invitation API
+  - [x] 01-06-PLAN.md — Create tenant authentication UI with registration, login, dashboard
 
 ### Phase 2: Twenty CRM Integration
 **Goal**: Platform uses self-hosted Twenty CRM as central data hub with all existing data migrated

@@ -1,7 +1,11 @@
 const { Pool } = require('pg');
 
-// Connection pool configuration - use localhost for local development
-const dbUrl = process.env.DATABASE_URL || 'postgresql://homelab:BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg@localhost:5432/revivepropertyco';
+// Connection pool configuration - DATABASE_URL is required for security (CR-01 fix)
+const dbUrl = process.env.DATABASE_URL;
+
+if (!dbUrl) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
 
 const pool = new Pool({
   connectionString: dbUrl,

@@ -2,7 +2,18 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { query } = require('./database.cjs');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-in-production';
+// JWT_SECRET must be set in production (WR-03 fix)
+// Use default only in development for convenience
+const isProduction = process.env.NODE_ENV === 'production';
+const JWT_SECRET = process.env.JWT_SECRET || (isProduction ? null : 'dev-secret-do-not-use-in-production');
+
+if (!process.env.JWT_SECRET) {
+  if (isProduction) {
+    throw new Error('JWT_SECRET environment variable must be set in production');
+  }
+  console.warn('WARNING: Using default JWT secret for development only. Set JWT_SECRET environment variable.');
+}
+
 const JWT_EXPIRY = '7d'; // Token expires in 7 days
 
 /**

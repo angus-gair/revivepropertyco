@@ -67,20 +67,12 @@ class ModuleRegistry {
     const graph = {};
     const inDegree = {};
 
-    // Initialize graph and in-degree map
+    // Initialize graph and in-degree map (WR-07 fix: correct in-degree calculation)
     for (const [name, module] of this.modules.entries()) {
       const deps = module.manifest.dependencies || [];
       graph[name] = deps;
-      inDegree[name] = 0;
-    }
-
-    // Calculate in-degrees
-    for (const [name, deps] of Object.entries(graph)) {
-      for (const dep of deps) {
-        if (inDegree[dep] !== undefined) {
-          inDegree[dep] = (inDegree[dep] || 0) + 1;
-        }
-      }
+      // In-degree = number of dependencies this module has
+      inDegree[name] = deps.length;
     }
 
     // Queue of modules with no incoming edges

@@ -5,7 +5,7 @@
 
 const express = require('express');
 const crypto = require('crypto');
-const { query } = require('../lib/database.cjs');
+const { query, transaction } = require('../lib/database.cjs');
 const { authenticateTenantToken, generateTenantToken, hashPassword } = require('../lib/auth-platform.cjs');
 const { getTenantId, tenantMiddleware } = require('../lib/tenant-context.cjs');
 
@@ -223,6 +223,7 @@ router.get('/pending/:token', async (req, res) => {
  * POST /api/invitations/accept
  * Accept invitation and create user account
  * Body: { token, password, firstName, lastName }
+ * (CR-03 fix: race condition prevented by using transaction)
  */
 router.post('/accept', async (req, res) => {
   try {
@@ -244,69 +245,65 @@ router.post('/accept', async (req, res) => {
       });
     }
 
-    // Use transaction for invitation acceptance
-    const result = await query(
-      `WITH inv AS (
-        SELECT id, tenant_id, email, role, expires_at
-        FROM tenant_invitations
-        WHERE token = $1 AND accepted_at IS NULL AND expires_at > CURRENT_TIMESTAMP
-        FOR UPDATE
-      )
-      UPDATE tenant_invitations
-      SET accepted_at = CURRENT_TIMESTAMP
-      WHERE id = (SELECT id FROM inv)
-      RETURNING tenant_id, email, role`,
-      [token]
-    );
+    // Use transaction to prevent race condition in invitation acceptance
+    const result = await transaction(async (client) => {
+      // Lock and validate invitation within transaction
+      const invResult = await client.query(
+        `SELECT id, tenant_id, email, role, expires_at
+         FROM tenant_invitations
+         WHERE token = $1 AND accepted_at IS NULL AND expires_at > CURRENT_TIMESTAMP
+         FOR UPDATE`,
+        [token]
+      );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Invalid or expired invitation'
-      });
-    }
+      if (invResult.rows.length === 0) {
+        throw new Error('INVALID_INVITATION');
+      }
 
-    const invitation = result.rows[0];
+      const invitation = invResult.rows[0];
 
-    // Check if user already exists (race condition)
-    const existingUser = await query(
-      'SELECT id FROM tenant_users WHERE email = $1 AND tenant_id = $2',
-      [invitation.email, invitation.tenant_id]
-    );
+      // Check for existing user within transaction (prevents race condition)
+      const existingUser = await client.query(
+        'SELECT id FROM tenant_users WHERE email = $1 AND tenant_id = $2',
+        [invitation.email, invitation.tenant_id]
+      );
 
-    if (existingUser.rows.length > 0) {
-      return res.status(409).json({
-        success: false,
-        error: 'User already exists'
-      });
-    }
+      if (existingUser.rows.length > 0) {
+        throw new Error('USER_EXISTS');
+      }
 
-    // Hash password and create user
-    const passwordHash = await hashPassword(password);
+      // Mark invitation as accepted
+      await client.query(
+        'UPDATE tenant_invitations SET accepted_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [invitation.id]
+      );
 
-    const userResult = await query(
-      `INSERT INTO tenant_users (tenant_id, email, password_hash, role, first_name, last_name, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE')
-       RETURNING id, email, role, first_name, last_name, created_at`,
-      [invitation.tenant_id, invitation.email, passwordHash, invitation.role, firstName || '', lastName || '']
-    );
+      // Hash password and create user
+      const passwordHash = await hashPassword(password);
+      const userResult = await client.query(
+        `INSERT INTO tenant_users (tenant_id, email, password_hash, role, first_name, last_name, status)
+         VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE')
+         RETURNING id, email, role, first_name, last_name, created_at`,
+        [invitation.tenant_id, invitation.email, passwordHash, invitation.role, firstName || '', lastName || '']
+      );
 
-    const user = userResult.rows[0];
+      return { user: userResult.rows[0], invitation };
+    });
 
-    // Get tenant info for token
+    // Get tenant info for token (outside transaction, read-only)
     const tenantResult = await query(
       'SELECT id, slug, name FROM tenants WHERE id = $1',
-      [invitation.tenant_id]
+      [result.invitation.tenant_id]
     );
 
     const tenant = tenantResult.rows[0];
 
     // Generate JWT token
     const jwtToken = generateTenantToken(
-      user.id,
+      result.user.id,
       tenant.id,
       tenant.slug,
-      user.role
+      result.user.role
     );
 
     res.status(201).json({
@@ -314,11 +311,11 @@ router.post('/accept', async (req, res) => {
       message: 'Invitation accepted successfully',
       token: jwtToken,
       user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        firstName: user.first_name,
-        lastName: user.last_name
+        id: result.user.id,
+        email: result.user.email,
+        role: result.user.role,
+        firstName: result.user.first_name,
+        lastName: result.user.last_name
       },
       tenant: {
         id: tenant.id,
@@ -328,6 +325,22 @@ router.post('/accept', async (req, res) => {
     });
   } catch (error) {
     console.error('Accept invitation error:', error);
+
+    // Handle specific errors
+    if (error.message === 'INVALID_INVITATION') {
+      return res.status(404).json({
+        success: false,
+        error: 'Invalid or expired invitation'
+      });
+    }
+
+    if (error.message === 'USER_EXISTS') {
+      return res.status(409).json({
+        success: false,
+        error: 'User already exists'
+      });
+    }
+
     res.status(500).json({
       success: false,
       error: 'Failed to accept invitation'

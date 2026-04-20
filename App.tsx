@@ -39,6 +39,7 @@ import CustomerQuotesPage from './pages/customer/QuotesPage';
 import RegisterPage from './pages/platform/RegisterPage';
 import LoginPlatformPage from './pages/platform/LoginPlatformPage';
 import PlatformDashboard from './pages/platform/PlatformDashboard';
+import PlatformProtectedRoute from './components/PlatformProtectedRoute';
 import { TenantAuthProvider } from './contexts/TenantAuthContext';
 
 const App: React.FC = () => {
@@ -139,9 +140,9 @@ const App: React.FC = () => {
                 <Route
                   path="/platform/dashboard"
                   element={
-                    <ProtectedRoute>
+                    <PlatformProtectedRoute>
                       <PlatformDashboard />
-                    </ProtectedRoute>
+                    </PlatformProtectedRoute>
                   }
                 />
               </Routes>

@@ -8,6 +8,7 @@ const { authenticateTenantToken } = require('../lib/auth-platform.cjs');
 const { tenantMiddleware } = require('../lib/tenant-context.cjs');
 const { TwentyClient } = require('../lib/twenty-client.cjs');
 const { setupWorkspaceSchema } = require('../lib/twenty-schema.cjs');
+const { storeToken, getToken, listTokens } = require('../lib/twenty-token-storage.cjs');
 
 // Apply tenant authentication to all routes
 router.use(authenticateTenantToken);
@@ -64,12 +65,8 @@ router.post('/workspaces/register', async (req, res) => {
 
     const workspace = workspaceResult.rows[0];
 
-    // Store API token (placeholder for encryption - will be implemented in plan 02-04)
-    await query(
-      `INSERT INTO tenant_twenty_tokens (tenant_id, workspace_id, token_type, encrypted_token, token_label)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [tenantId, workspace.workspace_id, 'API', apiToken, 'Default API token']
-    );
+    // Store API token (encrypted)
+    await storeToken(tenantId, workspace.workspace_id, 'API', apiToken, 'Default API token');
 
     // Setup custom objects in Twenty workspace
     const schemaResult = await setupWorkspaceSchema(twentyClient);
@@ -155,20 +152,17 @@ router.post('/setup-objects', async (req, res) => {
 
     const workspace = workspaceResult.rows[0];
 
-    // Get API token (placeholder for decryption)
-    const tokenResult = await query(
-      'SELECT encrypted_token FROM tenant_twenty_tokens WHERE workspace_id = $1 AND token_type = $2',
-      [workspace.workspace_id, 'API']
-    );
+    // Get and decrypt API token
+    const tokenData = await getToken(tenantId, workspace.workspace_id, 'API');
 
-    if (tokenResult.rows.length === 0) {
+    if (!tokenData) {
       return res.status(404).json({
         success: false,
         error: 'No API token found for workspace'
       });
     }
 
-    const apiToken = tokenResult.rows[0].encrypted_token; // TODO: Decrypt in plan 02-04
+    const apiToken = tokenData.token;
 
     // Create Twenty client and setup schema
     const twentyClient = new TwentyClient(apiToken, workspace.server_url);
@@ -211,19 +205,17 @@ router.post('/test-connection', async (req, res) => {
 
     const workspace = workspaceResult.rows[0];
 
-    const tokenResult = await query(
-      'SELECT encrypted_token FROM tenant_twenty_tokens WHERE workspace_id = $1 AND token_type = $2',
-      [workspace.workspace_id, 'API']
-    );
+    // Get and decrypt API token
+    const tokenData = await getToken(tenantId, workspace.workspace_id, 'API');
 
-    if (tokenResult.rows.length === 0) {
+    if (!tokenData) {
       return res.status(404).json({
         success: false,
         error: 'No API token found for workspace'
       });
     }
 
-    const apiToken = tokenResult.rows[0].encrypted_token; // TODO: Decrypt in plan 02-04
+    const apiToken = tokenData.token;
     const twentyClient = new TwentyClient(apiToken, workspace.server_url);
     const testResult = await twentyClient.testConnection();
 
@@ -238,6 +230,30 @@ router.post('/test-connection', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to test connection'
+    });
+  }
+});
+
+/**
+ * GET /api/twenty/tokens
+ * List all tokens for the current tenant (redacted)
+ */
+router.get('/tokens', async (req, res) => {
+  try {
+    const { tenantId } = req.tenant;
+
+    const tokens = await listTokens(tenantId);
+
+    res.json({
+      success: true,
+      tokens
+    });
+
+  } catch (error) {
+    console.error('[twenty] List tokens error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to list tokens'
     });
   }
 });

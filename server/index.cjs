@@ -24,6 +24,8 @@ const customerRouter = require('./api/customer.cjs');
 const customerDocumentsRouter = require('./api/customerDocuments.cjs');
 const customerQuotesRouter = require('./api/customerQuotes.cjs');
 const hipagesRouter = require('./api/hipages.cjs');
+const platformRouter = require('./api/platform.cjs');
+const authPlatformRouter = require('./api/auth-platform.cjs');
 const { subscribeToHipagesUpdates } = require('./lib/hipages-sync.cjs');
 
 const app = express();
@@ -82,6 +84,9 @@ app.use('/api/customer', customerRouter);
 app.use('/api/customer', customerDocumentsRouter);
 app.use('/api/customer', customerQuotesRouter);
 app.use('/api/hipages', hipagesRouter);
+// Platform API routes (multi-tenant)
+app.use('/api/platform', platformRouter);
+app.use('/api/auth/platform', authPlatformRouter);
 
 // Health check
 app.get('/health', (req, res) => {

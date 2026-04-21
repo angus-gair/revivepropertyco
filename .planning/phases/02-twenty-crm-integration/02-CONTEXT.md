@@ -1,6 +1,7 @@
 # Phase 2: Twenty CRM Integration - Context
 
 **Gathered:** 2026-04-20
+**Updated:** 2026-04-21 (CRM deployed to crm.ajinsights.com.au)
 **Status:** Ready for planning
 
 <domain>
@@ -22,10 +23,10 @@ This phase delivers Twenty CRM as the central data hub for the multi-tenant SaaS
 ## Implementation Decisions
 
 ### Deployment Strategy
-- **D-01:** Twenty CRM deployed as separate Docker service in existing docker-compose.yml
+- **D-01:** Twenty CRM deployed at `https://crm.ajinsights.com.au` (already deployed)
 - **D-02:** Uses shared `homelab_internal` network for internal communication with backend
-- **D-03:** External access via Traefik (separate subdomain: `crm.revivepropertyco.au` or path-based)
-- **D-04:** SERVER_URL configured as public URL (`https://revivepropertyco.au/crm` or `https://crm.revivepropertyco.au`)
+- **D-03:** External access via Traefik on subdomain `crm.ajinsights.com.au`
+- **D-04:** SERVER_URL configured as `https://crm.ajinsights.com.au`
 - **D-05:** Postgres shared with platform (separate database/schema) OR dedicated Twenty database
 - **D-06:** Redis for cache/jobs (if required by Twenty) deployed as service
 
@@ -178,12 +179,12 @@ services:
   twenty-web:
     image: twentycrm/twenty:latest
     environment:
-      SERVER_URL: https://crm.revivepropertyco.au
+      SERVER_URL: https://crm.ajinsights.com.au
       PG_DATABASE_URL: postgresql://twenty:${TWENTY_DB_PASSWORD}@twenty-db:5432/twenty_crms
       REDIS_HOST: twenty-redis
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.twenty.rule=Host(`crm.revivepropertyco.au`)"
+      - "traefik.http.routers.twenty.rule=Host(`crm.ajinsights.com.au`)"
 
   twenty-worker:
     image: twentycrm/twenty:latest

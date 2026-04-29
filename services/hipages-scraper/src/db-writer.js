@@ -11,19 +11,38 @@ const pool = new Pool({
 
 /**
  * Generate a composite hipages_id from lead fields
- * Uses customer_name-suburb-posted_date as unique identifier
+ * Uses customer_name-suburb-job_type-description_hash as unique identifier
+ * Excludes timestamp to prevent duplicates when same lead is scraped multiple times
  */
 function generateHipagesId(lead) {
   if (lead.hipages_id) {
     return lead.hipages_id;
   }
 
-  // Create composite key from name, suburb, and posted date
-  const namePart = (lead.customer_name || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-  const suburbPart = (lead.suburb || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-  const datePart = lead.posted_date ? new Date(lead.posted_date).getTime() : Date.now();
+  // Normalize customer name: use placeholder if empty
+  let namePart = (lead.customer_name || '').trim();
+  if (!namePart) {
+    // Use job_type as fallback, or 'unknown' if both are empty
+    namePart = (lead.job_type || 'unknown').trim();
+  }
+  namePart = namePart.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
-  return `${namePart}-${suburbPart}-${datePart}`;
+  // Normalize suburb: remove newlines and extra whitespace
+  let suburbPart = (lead.suburb || '').trim();
+  suburbPart = suburbPart.replace(/\s+/g, ' ').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+  // Add job type to distinguish different jobs from same customer
+  const jobPart = (lead.job_type || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+  // Create a hash from description to distinguish similar jobs with different details
+  const descPart = (lead.description || '').trim().substring(0, 50);
+  const descHash = descPart.split('').reduce((acc, char) => {
+    return ((acc << 5) - acc) + char.charCodeAt(0);
+  }, 0);
+  const descHashStr = Math.abs(descHash).toString(16);
+
+  // Composite key without timestamp - stable across multiple scrapes
+  return `${namePart}-${suburbPart}-${jobPart}-${descHashStr}`;
 }
 
 /**
@@ -48,20 +67,28 @@ function normalizeStatus(status) {
 /**
  * Parse hipages date format to TIMESTAMP
  * Handles formats like "11th Apr 2026 - 9:53 pm"
+ * IMPORTANT: Hipages displays times that users interpret as AEST, but they're actually UTC
+ * We store as-is (UTC) and the frontend converts to AEST for display
  */
 function parseDate(dateStr) {
   if (!dateStr) return null;
 
   try {
-    // Parse "11th Apr 2026 - 9:53 pm" format
-    const cleaned = dateStr
-      .replace(/(\d+)(st|nd|rd|th)/, '$1') // Remove ordinal suffixes
-      .replace(/-\s*\d+:\d+\s*(am|pm)/i, '') // Remove time part for now
-      .trim();
+    // Parse "15th Apr 2026 - 6:24 pm" format
+    // Remove ordinal suffixes (15th -> 15)
+    const withoutOrdinal = dateStr.replace(/(\d+)(st|nd|rd|th)/, '$1');
 
-    const parsed = new Date(cleaned);
-    if (!isNaN(parsed.getTime())) {
-      return parsed;
+    // Split into date and time parts
+    const parts = withoutOrdinal.split(' - ');
+    if (parts.length >= 2) {
+      const datePart = parts[0].trim(); // "15th Apr 2026" -> "15 Apr 2026"
+      const timePart = parts[1].trim(); // "6:24 pm"
+
+      // Parse the date/time string (stores as UTC)
+      const dateObj = new Date(datePart + ' ' + timePart);
+      if (!isNaN(dateObj.getTime())) {
+        return dateObj;
+      }
     }
 
     // Fallback: try parsing as-is

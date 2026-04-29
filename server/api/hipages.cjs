@@ -4,7 +4,148 @@ const { query, pool } = require('../lib/database.cjs');
 const { authenticateToken } = require('../lib/auth.cjs');
 const { v4: uuidv4 } = require('uuid');
 
-// Apply authentication to all hipages routes
+/**
+ * GET /api/hipages/debug - Debug endpoint (no auth required)
+ */
+router.get('/debug', async (req, res) => {
+  try {
+    const result = await query('SELECT COUNT(*) as count FROM hipages_leads');
+    res.json({
+      success: true,
+      message: 'Hipages API is working',
+      database: 'Connected',
+      totalLeads: result.rows[0].count,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * GET /api/hipages/test - Test endpoint (no auth)
+ */
+router.get('/test', async (req, res) => {
+  res.json({ success: true, message: 'Test endpoint works!' });
+});
+
+/**
+ * GET /api/hipages/image - Proxy hipages images to bypass CORS
+ */
+router.get('/image', async (req, res) => {
+  try {
+    console.log('[hipages] Image proxy called with URL:', req.query.url?.substring(0, 50));
+    const { url } = req.query;
+
+    // Security: Validate URL is from hipagesusercontent.com
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: 'URL parameter is required' });
+    }
+
+    // Allow only hipagesusercontent.com URLs
+    if (!url.startsWith('https://attachments.hipagesusercontent.com/') &&
+        !url.startsWith('http://attachments.hipagesusercontent.com/')) {
+      return res.status(403).json({ error: 'Invalid URL domain' });
+    }
+
+    // Fetch image from hipages CDN
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; RevivePropertyCo/1.0)'
+      }
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: `Failed to fetch image: ${response.statusText}`
+      });
+    }
+
+    // Get content type from response
+    const contentType = response.headers.get('Content-Type') || 'image/jpeg';
+
+    // Set content type and cache headers
+    // Note: Do NOT manually set Access-Control-Allow-Origin here.
+    // The global cors() middleware in server/index.cjs already sets the correct
+    // origin-specific CORS headers. Setting a wildcard here would conflict with
+    // the credentials header and cause browsers to reject the image (black rectangle).
+    res.setHeader('Content-Type', contentType);
+
+    // Cache for 1 year (images don't change)
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
+    // Pipe image data to response
+    const buffer = await response.arrayBuffer();
+    res.send(Buffer.from(buffer));
+
+    console.log(`[hipages] Proxied image: ${url} (${contentType})`);
+  } catch (error) {
+    console.error('[hipages] Error proxying image:', error);
+    res.status(500).json({ error: 'Failed to fetch image' });
+  }
+});
+
+/**
+ * GET /api/hipages/noauth/leads - Public hipages leads endpoint (no auth required)
+ */
+router.get('/noauth/leads', async (req, res) => {
+  try {
+    const { page = 1, limit = 10000, status, synced_to_crm } = req.query;
+    const offset = (page - 1) * limit;
+
+    // Build dynamic WHERE clause
+    let whereClause = 'WHERE 1=1';
+    const params = [];
+    let paramIndex = 1;
+
+    if (status) {
+      whereClause += ` AND status = $${paramIndex}`;
+      params.push(status);
+      paramIndex++;
+    }
+
+    if (synced_to_crm !== undefined) {
+      whereClause += ` AND synced_to_crm = $${paramIndex}`;
+      params.push(synced_to_crm === 'true');
+      paramIndex++;
+    }
+
+    // Get total count for pagination
+    const countQuery = `SELECT COUNT(*) as total FROM hipages_leads ${whereClause}`;
+    const countResult = await query(countQuery, params);
+    const total = parseInt(countResult.rows[0].total);
+
+    // Get paginated results
+    const dataQuery = `
+      SELECT * FROM hipages_leads
+      ${whereClause}
+      ORDER BY scraped_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+    params.push(limit, offset);
+
+    const result = await query(dataQuery, params);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total
+      }
+    });
+  } catch (error) {
+    console.error('[hipages] Error fetching leads (noauth):', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch hipages leads' });
+  }
+});
+
+// Apply authentication to all other hipages routes
 router.use(authenticateToken);
 
 /**

@@ -467,8 +467,36 @@ async function runScrape() {
 
     console.log(`[scraper] Total leads extracted: ${allLeads.length}`);
 
-    // Step 7: Save to database
+    // Step 7: Clean and normalize lead data before saving
     if (allLeads.length > 0) {
+      console.log('[scraper] Cleaning and normalizing lead data...');
+
+      allLeads.forEach(lead => {
+        // Normalize suburb: remove newlines, extra whitespace, and "Waitlist" prefix
+        if (lead.suburb) {
+          lead.suburb = lead.suburb
+            .replace(/^Waitlist\s*/i, '') // Remove "Waitlist" prefix
+            .replace(/\n+/g, ' ') // Replace newlines with spaces
+            .replace(/\s+/g, ' ') // Collapse multiple spaces
+            .trim();
+        }
+
+        // Normalize customer name
+        if (lead.customer_name) {
+          lead.customer_name = lead.customer_name.trim();
+        }
+
+        // Normalize job type
+        if (lead.job_type) {
+          lead.job_type = lead.job_type.trim();
+        }
+
+        // Normalize description
+        if (lead.description) {
+          lead.description = lead.description.replace(/\s+/g, ' ').trim();
+        }
+      });
+
       console.log('[scraper] Saving leads to database...');
       const result = await dbWriter.saveLeads(allLeads);
       console.log(`[scraper] Scrape complete: ${result.saved} leads saved`);

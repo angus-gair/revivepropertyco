@@ -27,6 +27,7 @@ const hipagesRouter = require('./api/hipages.cjs');
 const platformRouter = require('./api/platform.cjs');
 const authPlatformRouter = require('./api/auth-platform.cjs');
 const invitationsRouter = require('./api/invitations.cjs');
+const twentyWebhooksRouter = require('./api/twenty-webhooks.cjs');
 const { subscribeToHipagesUpdates } = require('./lib/hipages-sync.cjs');
 
 const app = express();
@@ -63,6 +64,9 @@ app.use(cors({
   credentials: true
 }));
 
+// Raw body parser for webhook signature verification (must be before express.json)
+app.use('/api/twenty/webhooks', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -90,6 +94,8 @@ app.use('/api/platform', platformRouter);
 app.use('/api/auth/platform', authPlatformRouter);
 // Team invitations API
 app.use('/api/invitations', invitationsRouter);
+// Twenty CRM webhooks
+app.use('/api/twenty', twentyWebhooksRouter);
 
 // Health check
 app.get('/health', (req, res) => {

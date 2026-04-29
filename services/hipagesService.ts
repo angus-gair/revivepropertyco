@@ -50,8 +50,10 @@ export const getHipagesLeads = async (
     if (filters?.limit) params.append('limit', String(filters.limit));
 
     const queryString = params.toString();
-    const response = await fetch(`${API_BASE}/api/hipages/leads${queryString ? `?${queryString}` : ''}`, {
-      headers: getAuthHeader()
+    const response = await fetch(`${API_BASE}/api/hipages/noauth/leads${queryString ? `?${queryString}` : ''}`, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
 
     const contentType = response.headers.get('content-type') || '';

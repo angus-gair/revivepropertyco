@@ -3,7 +3,7 @@
 
 User-agent: *
 Allow: /
-Disallow: /admin
+Allow: /admin
 Disallow: /login
 Disallow: /session/
 Disallow: /success

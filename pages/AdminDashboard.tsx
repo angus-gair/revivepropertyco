@@ -33,6 +33,8 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
+const APP_VERSION = 'v1.0.6'; // Auto-increment on deploy
+
 const AdminDashboard: React.FC = () => {
   usePageSEO({ ...SEO.admin, noindex: true });
   const { signOut, user } = useAuth();
@@ -192,6 +194,11 @@ const AdminDashboard: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-4 bg-white p-2 border border-slate-200 shadow-sm flex-wrap">
+             <div className="px-4 py-3 border-r border-slate-100 flex items-center gap-2">
+                <span className="text-[8px] font-mono text-slate-400">
+                  {APP_VERSION}
+                </span>
+             </div>
              <div className="px-6 py-3 border-r border-slate-100 flex items-center gap-3">
                 <div className="w-6 h-6 bg-[#36453B] rounded-full flex items-center justify-center text-[8px] font-black text-white uppercase">
                   {user?.username?.charAt(0) || 'A'}
@@ -201,12 +208,16 @@ const AdminDashboard: React.FC = () => {
                 </span>
              </div>
              {['leads', 'calendar', 'tasks', 'stats'].map((tab) => (
-                <button 
+                <button
                   key={tab}
                   className={`px-6 sm:px-8 py-3 text-[9px] font-black uppercase tracking-[0.4em] transition-all rounded-none ${activeTab === tab ? 'bg-[#121212] text-white shadow-xl' : 'text-slate-400 hover:text-[#121212]'}`}
                   onClick={() => setActiveTab(tab as any)}
                 >{tab}</button>
               ))}
+              <button
+                onClick={() => navigate('/contractors/hp-leads')}
+                className="px-6 sm:px-8 py-3 text-[9px] font-black uppercase tracking-[0.4em] transition-all rounded-none text-orange-600 hover:bg-orange-50"
+              >hipages</button>
               <button onClick={handleSignOut} className="p-3 text-slate-400 hover:text-rose-600 transition-all border-l border-slate-100 ml-2" title="Sign Out"><LogOut size={16} /></button>
           </div>
         </div>
@@ -492,11 +503,17 @@ const AdminDashboard: React.FC = () => {
                       <button className="w-full py-4 border border-slate-200 text-[9px] font-black uppercase tracking-widest hover:bg-[#121212] hover:text-white transition-all flex items-center justify-center gap-3">
                         <ArrowUpRight size={14} /> Transmit Email Brief
                       </button>
-                      <button 
+                      <button
                         onClick={() => navigate('/admin/telequote')}
                         className="w-full py-4 bg-[#36453B] text-white text-[9px] font-black uppercase tracking-widest hover:bg-[#121212] transition-all flex items-center justify-center gap-3 shadow-lg"
                       >
                         <Video size={14} /> Launch TeleQuote
+                      </button>
+                      <button
+                        onClick={() => navigate('/contractors/hp-leads')}
+                        className="w-full py-4 bg-orange-600 text-white text-[9px] font-black uppercase tracking-widest hover:bg-orange-700 transition-all flex items-center justify-center gap-3 shadow-lg"
+                      >
+                        <ClipboardList size={14} /> hipages Leads
                       </button>
                       <button className="w-full py-4 border border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-300 cursor-not-allowed flex items-center justify-center gap-3">
                         <Archive size={14} /> Purge Entry

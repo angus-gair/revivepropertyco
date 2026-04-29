@@ -28,8 +28,8 @@ Twenty CRM is a modern, open-source CRM built with React (frontend) and NestJS (
 **Deployment Strategy**
 - **D-01:** Twenty CRM deployed as separate Docker service in existing docker-compose.yml
 - **D-02:** Uses shared `homelab_internal` network for internal communication with backend
-- **D-03:** External access via Traefik (separate subdomain: `crm.revivepropertyco.au` or path-based)
-- **D-04:** SERVER_URL configured as public URL (`https://revivepropertyco.au/crm` or `https://crm.revivepropertyco.au`)
+- **D-03:** External access via Traefik (separate subdomain: `crm.ajinsights.com.au` or path-based)
+- **D-04:** SERVER_URL configured as public URL (`https://revivepropertyco.au/crm` or `https://crm.ajinsights.com.au`)
 - **D-05:** Postgres shared with platform (separate database/schema) OR dedicated Twenty database
 - **D-06:** Redis for cache/jobs (if required by Twenty) deployed as service
 
@@ -327,8 +327,8 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://twenty:${TWENTY_DB_PASSWORD}@twenty-db:5432/twenty_crms
       REDIS_URL: redis://twenty-redis:6379
-      SERVER_URL: https://crm.revivepropertyco.au
-      FRONT_BASE_URL: https://crm.revivepropertyco.au
+      SERVER_URL: https://crm.ajinsights.com.au
+      FRONT_BASE_URL: https://crm.ajinsights.com.au
       APP_SECRET: ${TWENTY_APP_SECRET}
       # Email configuration (optional for Phase 2)
       EMAIL_DRIVER: smtp
@@ -398,10 +398,10 @@ volumes:
 
 **What goes wrong:** Twenty generates malformed links (webhook URLs, file URLs, email links) because SERVER_URL doesn't match how users access the system.
 
-**Why it happens:** SERVER_URL is used for link generation throughout Twenty. If set to `http://localhost:3000` but users access via `https://crm.revivepropertyco.au`, all links break.
+**Why it happens:** SERVER_URL is used for link generation throughout Twenty. If set to `http://localhost:3000` but users access via `https://crm.ajinsights.com.au`, all links break.
 
 **How to avoid:**
-- Set SERVER_URL to the public-facing URL with protocol: `https://crm.revivepropertyco.au`
+- Set SERVER_URL to the public-facing URL with protocol: `https://crm.ajinsights.com.au`
 - Include protocol (http/https) — don't omit it
 - Don't include port if using standard 443 for HTTPS
 - Verify by checking generated links after first deploy
@@ -622,7 +622,7 @@ module.exports = router;
 |---|-------|---------|---------------|
 | A1 | Twenty v1.22.6 is stable for production use | Standard Stack | Version may have bugs; mitigation: test in staging first |
 | A2 | Dedicated Twenty database is preferable to shared platform DB | Docker Compose Pattern | May increase backup complexity; can revisit if ops burden too high |
-| A3 | Traefik path-based routing (`/crm`) is sufficient for Phase 2 | Docker Compose Pattern | May need subdomain (`crm.revivepropertyco.au`) for proper cookie handling |
+| A3 | Traefik path-based routing (`/crm`) is sufficient for Phase 2 | Docker Compose Pattern | May need subdomain (`crm.ajinsights.com.au`) for proper cookie handling |
 | A4 | GraphQL bulk mutations can handle 10,000+ records without timeout | Data Migration Approach | May need batching; mitigation: implement chunked migration with progress tracking |
 | A5 | Twenty workspace-per-tenant pattern provides sufficient isolation | Multi-Tenancy Integration | May need additional application-level checks |
 

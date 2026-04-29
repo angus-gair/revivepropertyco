@@ -1,0 +1,150 @@
+{
+  "name": "Enterprise Quoting & Document Generation Pipeline",
+  "nodes":
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"processing\",\n  \"message\": \"Lead successfully queued for cognitive analysis.\"\n}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "7814b770-5fa3-4375-9b2f-7a4fc0198881",
+      "name": "Respond to Webhook (Async Acceptance)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [ 220, 0 ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following lead data and generate a professional Quote and Statement of Work. You must ensure absolute compliance with AS 3740 (Waterproofing of domestic wet areas) and AS 3958.1 (Ceramic tiles). Output strictly in the defined JSON format without markdown wrappers.\n\nLead Data:\n{{ $json.body }}",
+        "options": {}
+      },
+      "id": "81f1b272-5fa3-4375-9b2f-7a4fc0198882",
+      "name": "AI Agent (Quoting Engine)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [ 440, 0 ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "91f1b272-5fa3-4375-9b2f-7a4fc0198883",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [ 440, 200 ]
+    },
+    {
+      "parameters": {
+        "tableName": "documents",
+        "limit": 5,
+        "options": {}
+      },
+      "id": "a1f1b272-5fa3-4375-9b2f-7a4fc0198884",
+      "name": "Supabase Vector Store (Retrieval Tool)",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [ 580, 200 ]
+    },
+    {
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"client\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": { \"type\": \"string\" },\n        \"address\": { \"type\": \"string\" }\n      },\n      \"required\": [\"name\", \"address\"]\n    },\n    \"projectSummary\": { \"type\": \"string\" },\n    \"lineItems\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"description\": { \"type\": \"string\" },\n          \"qty\": { \"type\": \"number\" },\n          \"unitPrice\": { \"type\": \"number\" }\n        },\n        \"required\": [\"description\", \"qty\", \"unitPrice\"]\n      }\n    }\n  },\n  \"required\":\n}"
+      },
+      "id": "b1f1b272-5fa3-4375-9b2f-7a4fc0198885",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1,
+      "position": [ 720, 200 ]
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "id": "f1f1b272-5fa3-4375-9b2f-7a4fc0198889",
+      "name": "Wait (Human-in-the-Loop Suspension)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [ 860, 0 ]
+    },
+    {
+      "parameters": {
+        "channel": "C01234567",
+        "text": "New Quotation Generated. Please review and edit.",
+        "blocksUi": "={\n  \"blocks\":\n}",
+        "otherOptions": {}
+      },
+      "id": "e1f1b272-5fa3-4375-9b2f-7a4fc0198888",
+      "name": "Slack (Notify Reviewer)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [ 860, -200 ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json.body; // Data received back from Editor.js portal\nconst client = inputData.client;\nconst items = inputData.lineItems;\n\nlet subtotal = 0;\nconst processedItems = items.map(item => {\n    const rowTotal = item.qty * item.unitPrice;\n    subtotal += rowTotal;\n    return {\n      ...item,\n        rowTotal: rowTotal.toFixed(2),\n        unitPrice: item.unitPrice.toFixed(2)\n    };\n});\n\nconst discountRate = 0.20;\nconst discountAmount = subtotal * discountRate;\nconst taxableAmount = subtotal - discountAmount;\nconst gst = taxableAmount * 0.10;\nconst grandTotal = taxableAmount + gst;\n\nlet tableRows = \"\";\nprocessedItems.forEach(item => {\n    tableRows += `<tr><td style=\"padding:12px; border-bottom:1px solid #eee;\">${item.description}</td><td style=\"padding:12px; border-bottom:1px solid #eee;\">${item.qty}</td><td style=\"padding:12px; border-bottom:1px solid #eee;\">$${item.unitPrice}</td><td style=\"padding:12px; border-bottom:1px solid #eee;\">10.0%</td><td style=\"padding:12px; border-bottom:1px solid #eee;\">$${item.rowTotal}</td></tr>`;\n});\n\nconst indexHtml = `<!DOCTYPE html><html lang=\"en\"><head><style>body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #2c3e50; margin: 40px; } table { width: 100%; border-collapse: collapse; margin-top: 40px; font-size: 14px; } th { background-color: #34495e; color: #ffffff; text-align: left; padding: 12px; }.summary-box { background-color: #ecf0f1; padding: 20px; border-left: 5px solid #3498db; margin-top: 30px; }.totals { float: right; width: 350px; margin-top: 30px; border-top: 2px solid #bdc3c7; padding-top: 15px; }.total-line { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }.grand-total { font-size: 18px; font-weight: bold; color: #2980b9; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ecf0f1; }</style></head><body><div style=\"display:flex; justify-content:space-between;\"><div><h3 style=\"color:#7f8c8d; margin-bottom:5px; font-size:12px; text-transform:uppercase;\">Recipient</h3><p style=\"margin:0; font-size:16px;\"><strong>${client.name}</strong><br>${client.address}</p></div><div><h3 style=\"color:#7f8c8d; margin-bottom:5px; font-size:12px; text-transform:uppercase;\">Quote Date</h3><p style=\"margin:0; font-size:16px;\"><strong>${new Date().toLocaleDateString()}</strong></p></div></div><div class=\"summary-box\"><p style=\"margin:0; line-height:1.6;\">${inputData.projectSummary}</p></div><table><thead><tr><th>DESCRIPTION</th><th>QTY</th><th>UNIT PRICE</th><th>GST</th><th>TOTAL</th></tr></thead><tbody>${tableRows}</tbody></table><div class=\"totals\"><div class=\"total-line\"><span>Subtotal:</span><span>$${subtotal.toFixed(2)}</span></div><div class=\"total-line\"><span>Discount (20%):</span><span>-$${discountAmount.toFixed(2)}</span></div><div class=\"total-line\"><span>GST:</span><span>$${gst.toFixed(2)}</span></div><div class=\"total-line grand-total\"><span>Total:</span><span>$${grandTotal.toFixed(2)}</span></div></div></body></html>`;\n\nconst headerHtml = `<!DOCTYPE html><html lang=\"en\"><body><div style=\"width: 100%; display: flex; justify-content: space-between; padding: 15px 40px; border-bottom: 3px solid #34495e; font-family: 'Helvetica Neue', sans-serif;\"><h1 style=\"margin: 0; color: #2980b9; font-size: 22px; font-weight: 700; letter-spacing: 1px;\">REVIVE PROPERTY CO.</h1><div style=\"text-align: right;\"><h2 style=\"margin: 0; font-size: 16px; color: #7f8c8d;\">QUOTE</h2><p style=\"margin: 2px 0 0 0; font-size: 11px; color: #95a5a6;\">Ref: RV_QT_${Math.floor(Math.random() * 10000)}</p></div></div></body></html>`;\n\nconst footerHtml = `<!DOCTYPE html><html lang=\"en\"><body><div style=\"width: 100%; text-align: center; font-family: 'Helvetica Neue', sans-serif; font-size: 11px; color: #95a5a6; padding-top: 15px; border-top: 1px solid #ecf0f1;\">Page <span class=\"pageNumber\"></span> of <span class=\"totalPages\"></span> | PENDING_DIGITAL_VERIFICATION | Gair Family Pty Ltd ABN: 19634697340</div></body></html>`;\n\nreturn [{json: { indexHtml, headerHtml, footerHtml }}];"
+      },
+      "id": "c1f1b272-5fa3-4375-9b2f-7a4fc0198886",
+      "name": "Code (Data Transformation & HTML Generation)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [ 1080, 0 ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://gotenberg:3000/forms/chromium/convert/html",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters":
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "quote.pdf"
+            }
+          }
+        }
+      },
+      "id": "d1f1b272-5fa3-4375-9b2f-7a4fc0198887",
+      "name": "HTTP Request (Gotenberg PDF Compiler)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [ 1300, 0 ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger (Lead Ingestion)": {
+      "main":
+    },
+    "Respond to Webhook (Async Acceptance)": {
+      "main": [ { "node": "AI Agent (Quoting Engine)", "type": "main", "index": 0 } ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [ { "node": "AI Agent (Quoting Engine)", "type": "ai_languageModel", "index": 0 } ]
+    },
+    "Supabase Vector Store (Retrieval Tool)": {
+      "ai_tool": [ { "node": "AI Agent (Quoting Engine)", "type": "ai_tool", "index": 0 } ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [ { "node": "AI Agent (Quoting Engine)", "type": "ai_outputParser", "index": 0 } ]
+    },
+    "AI Agent (Quoting Engine)": {
+      "main":
+    },
+    "Wait (Human-in-the-Loop Suspension)": {
+      "main":
+    },
+    "Code (Data Transformation & HTML Generation)": {
+      "main":
+    }
+  }
+}

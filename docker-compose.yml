@@ -123,34 +123,6 @@ services:
       timeout: 10s
       retries: 3
 
-  hipages-scraper:
-    build:
-      context: ./services/hipages-scraper
-      dockerfile: Dockerfile
-    container_name: revive-hipages-scraper
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - HIPAGES_USERNAME=${HIPAGES_USERNAME}
-      - HIPAGES_PASSWORD=${HIPAGES_PASSWORD}
-      - HIPAGES_HEADLESS=true
-      - CRON_SCHEDULE=0 */6 * * *
-    networks:
-      - homelab_internal
-    volumes:
-      - hipages-output:/app/output
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
-    healthcheck:
-      test: ["CMD", "node", "-e", "new (require('pg').Client)(process.env.DATABASE_URL).connect().then(() => process.exit(0)).catch(() => process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   # Twenty CRM Services
   twenty-db:
     image: postgres:15-alpine

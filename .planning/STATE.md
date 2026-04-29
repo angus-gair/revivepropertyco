@@ -28,7 +28,7 @@ See: .planning/SAAS-PLATFORM.md (updated 2026-04-20)
 Phase: 05 of 7 (historical leads feature)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-04-20
+Last activity: 2026-04-29 - Completed quick task 260429-4ur: fix nginx try_files directive and redeploy to fix SPA deep link redirects
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -69,6 +69,12 @@ None yet.
 ### Blockers/Concerns
 
 None yet.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260429-4ur | fix nginx try_files directive and redeploy to fix SPA deep link redirects | 2026-04-29 | 73f9730 | [260429-4ur-fix-nginx-try-files-directive-and-redepl](./quick/260429-4ur-fix-nginx-try-files-directive-and-redepl/) |
 
 ## Session Continuity
 

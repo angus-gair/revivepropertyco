@@ -114,7 +114,8 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
           <img
             src={currentImageUrl}
             alt={`Attachment ${currentIndex + 1}`}
-            className="max-w-full max-h-full object-contain"
+            className="w-full h-full object-contain"
+            style={{ maxHeight: 'calc(100vh - 200px)' }}
             onLoad={() => setIsLoading(false)}
             onError={() => {
               setIsLoading(false);

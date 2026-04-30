@@ -33,9 +33,9 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
     loadLeads();
   }, [statusFilter, syncFilter]);
 
-  // Polling for live updates (every 30 seconds)
+  // Polling for live updates (every 30 minutes)
   useEffect(() => {
-    console.log('[Polling] Starting 30-second polling for live updates');
+    console.log('[Polling] Starting 30-minute polling for live updates');
 
     // Initial load
     loadLeads();
@@ -44,7 +44,7 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
     const pollInterval = setInterval(() => {
       console.log('[Polling] Refreshing leads...');
       loadLeads();
-    }, 30000); // 30 seconds
+    }, 1800000); // 30 minutes
 
     return () => {
       console.log('[Polling] Stopping polling');
@@ -264,7 +264,7 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
                   : 'bg-red-100 text-red-800'
               }`}>
                 <Wifi className="w-4 h-4" />
-                Live (30s)
+                Live (30m)
               </div>
 
               {newLeadsCount > 0 && (
@@ -403,12 +403,10 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
                   return (
                     <tr
                       key={lead.lead_id}
-                      className="hover:bg-[#FDFCFB] transition-all"
+                      className="hover:bg-[#FDFCFB] cursor-pointer transition-all"
+                      onClick={() => setSelectedLead(lead)}
                     >
-                      <td
-                        className="px-3 py-3 whitespace-nowrap cursor-pointer"
-                        onClick={() => setSelectedLead(lead)}
-                      >
+                      <td className="px-3 py-3 whitespace-nowrap">
                         <div className="text-sm font-bold text-[#121212]">{lead.customer_name || 'Unknown'}</div>
                         {lead.description && (
                           <div className="text-xs text-slate-500 truncate max-w-[120px] mt-1" title={lead.description}>
@@ -487,7 +485,7 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
                           {normalizeStatus(lead.status)}
                         </span>
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
+                      <td className="px-3 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-2 justify-center">
                           <button
                             onClick={() => handleAccept(lead)}

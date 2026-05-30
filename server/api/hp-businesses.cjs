@@ -464,4 +464,22 @@ router.put('/sessions/:id', async (req, res) => {
   }
 });
 
+// POST /scrape/trigger
+/**
+ * POST /api/hp-businesses/scrape/trigger - Manually trigger a scrape run
+ */
+router.post('/scrape/trigger', async (req, res) => {
+  try {
+    const payload = JSON.stringify(req.body || {});
+    await query("SELECT pg_notify('hp_scrape_trigger', $1)", [payload]);
+    res.json({
+      success: true,
+      message: 'Scrape triggered successfully'
+    });
+  } catch (error) {
+    console.error('[hp-businesses] Error triggering scrape:', error);
+    res.status(500).json({ success: false, error: 'Failed to trigger scrape' });
+  }
+});
+
 module.exports = router;

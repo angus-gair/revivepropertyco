@@ -134,7 +134,7 @@ services:
       - NODE_ENV=production
       - HP_BUSINESSES_DB_URL=postgresql://homelab:BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg@postgres:5432/hipages_directory
       - HIPAGES_HEADLESS=true
-      - CRON_SCHEDULE=0 2 * * *
+      - CRON_SCHEDULE=0 */6 * * *
       - MAX_PAGES_PER_TRADE=5
       - SCRAPE_LOCATION=sydney-nsw
     networks:

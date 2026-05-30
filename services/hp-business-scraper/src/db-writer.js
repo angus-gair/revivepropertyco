@@ -70,6 +70,7 @@ async function saveBusinesses(businesses) {
       else updated++;
     }
 
+    await client.query("SELECT pg_notify('hp_businesses_updated', $1)", [JSON.stringify({ saved, updated })]);
     await client.query('COMMIT');
     console.log(`[db-writer] Saved ${saved} new, updated ${updated} businesses`);
     return { saved, updated };

@@ -125,8 +125,8 @@ async function scrapeTradeCategory(page, trade, location) {
   try {
     await page.goto(url, { waitUntil: 'networkidle', timeout: CONFIG.timeout });
 
-    // Wait for results to load
-    await page.waitForTimeout(2000);
+    // Wait for results to load (polite random delay)
+    await page.waitForTimeout(3000 + Math.random() * 4000);
 
     // Try multiple pages
     for (let pageNum = 1; pageNum <= CONFIG.maxPagesPerTrade; pageNum++) {
@@ -135,7 +135,8 @@ async function scrapeTradeCategory(page, trade, location) {
         const nextBtn = await page.$('[aria-label="Next page"], [data-testid="next-page"], button:has-text("Next")');
         if (!nextBtn) break;
         await nextBtn.click();
-        await page.waitForTimeout(2000);
+        // Polite random delay after page transition click
+        await page.waitForTimeout(3000 + Math.random() * 4000);
       }
 
       // Find business cards using multiple possible selectors
@@ -167,6 +168,7 @@ async function scrapeTradeCategory(page, trade, location) {
     }
   } catch (err) {
     console.error(`[scraper] Error scraping ${trade}/${location}:`, err.message);
+    throw err;
   }
 
   return businesses;
@@ -181,6 +183,7 @@ async function runScrape() {
   });
 
   const allBusinesses = [];
+  const RETRY_DELAY_MS = parseInt(process.env.RETRY_DELAY_MS || '300000');
 
   try {
     const context = await browser.newContext({
@@ -192,27 +195,45 @@ async function runScrape() {
 
     for (const trade of tradesToScrape) {
       const sessionId = await dbWriter.createSession(trade, CONFIG.location);
+      let success = false;
+      let lastError = null;
 
-      try {
-        const businesses = await scrapeTradeCategory(page, trade, CONFIG.location);
-        allBusinesses.push(...businesses);
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          console.log(`[scraper] Scraping trade category: ${trade} (Attempt ${attempt}/3)`);
+          const businesses = await scrapeTradeCategory(page, trade, CONFIG.location);
+          allBusinesses.push(...businesses);
 
-        if (businesses.length > 0) {
-          const result = await dbWriter.saveBusinesses(businesses);
-          await dbWriter.completeSession(sessionId, {
-            found: businesses.length,
-            new: result.saved,
-            updated: result.updated
-          });
-        } else {
-          await dbWriter.completeSession(sessionId, { found: 0, new: 0, updated: 0 });
+          if (businesses.length > 0) {
+            const result = await dbWriter.saveBusinesses(businesses);
+            await dbWriter.completeSession(sessionId, {
+              found: businesses.length,
+              new: result.saved,
+              updated: result.updated
+            });
+          } else {
+            await dbWriter.completeSession(sessionId, { found: 0, new: 0, updated: 0 });
+          }
+          success = true;
+          break;
+        } catch (err) {
+          console.error(`[scraper] Attempt ${attempt} failed for trade ${trade}:`, err.message);
+          lastError = err;
+          if (attempt < 3) {
+            const delay = RETRY_DELAY_MS * Math.pow(3, attempt - 1);
+            console.log(`[scraper] Retrying in ${delay}ms...`);
+            await new Promise(r => setTimeout(r, delay));
+          }
         }
-
-        // Polite delay between trades
-        await new Promise(r => setTimeout(r, 3000));
-      } catch (err) {
-        await dbWriter.completeSession(sessionId, {}, err.message);
       }
+
+      if (!success) {
+        console.error(`[scraper] All 3 attempts failed for trade ${trade}. Saving failed status.`);
+        await dbWriter.completeSession(sessionId, { found: 0, new: 0, updated: 0 }, lastError?.stack || lastError?.message || 'Unknown error');
+      }
+
+      // Polite delay between trades
+      await new Promise(r => setTimeout(r, 10000));
     }
   } finally {
     await browser.close();

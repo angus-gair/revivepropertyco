@@ -30,6 +30,7 @@ const authPlatformRouter = require('./api/auth-platform.cjs');
 const invitationsRouter = require('./api/invitations.cjs');
 const twentyWebhooksRouter = require('./api/twenty-webhooks.cjs');
 const { subscribeToHipagesUpdates } = require('./lib/hipages-sync.cjs');
+const { subscribeToHpBusinessesUpdates } = require('./lib/hp-businesses-sync.cjs');
 
 const app = express();
 const http = require('http');
@@ -169,6 +170,11 @@ server.listen(PORT, () => {
   // Subscribe to hipages updates after server starts
   subscribeToHipagesUpdates(io).catch((error) => {
     console.error('[sync] Failed to subscribe to hipages updates:', error);
+  });
+
+  // Subscribe to hp-businesses updates after server starts
+  subscribeToHpBusinessesUpdates(io).catch((error) => {
+    console.error('[sync] Failed to subscribe to hp-businesses updates:', error);
   });
 });
 

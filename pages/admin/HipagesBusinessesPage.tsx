@@ -6,6 +6,7 @@ import {
   Star, MapPin, Phone, Globe, Award, RefreshCw, Search, Filter,
   ExternalLink, X, MessageCircle, Archive
 } from 'lucide-react';
+import { io } from 'socket.io-client';
 
 type SortField = 'scraped_at' | 'rating' | 'review_count' | 'business_name';
 type SortOrder = 'asc' | 'desc';
@@ -33,14 +34,49 @@ const HipagesBusinessesPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [processingAction, setProcessingAction] = useState<string | null>(null);
 
+  // Scraper Operations State
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [triggeringScrape, setTriggeringScrape] = useState(false);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
+
+  const token = localStorage.getItem('revive_admin_token');
+  const hasToken = !!token;
+
+  // Socket.IO for real-time updates
+  useEffect(() => {
+    const socket = io('https://revivepropertyco.au', {
+      path: '/socket.io',
+      transports: ['websocket']
+    });
+
+    socket.on('hp-businesses:updated', (payload) => {
+      console.log('[Socket] Received live scraper update:', payload);
+      loadBusinesses();
+      loadSessions();
+    });
+
+    socket.on('hipages:leadsUpdated', (payload) => {
+      console.log('[Socket] Received hipages:leadsUpdated update:', payload);
+      loadBusinesses();
+      loadSessions();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   // Polling for live updates (every 30 minutes)
   useEffect(() => {
     console.log('[Polling] Starting 30-minute polling for hp-businesses');
     loadBusinesses();
+    loadSessions();
 
     const pollInterval = setInterval(() => {
       console.log('[Polling] Refreshing hp-businesses...');
       loadBusinesses();
+      loadSessions();
     }, 1800000); // 30 minutes
 
     return () => {
@@ -74,6 +110,32 @@ const HipagesBusinessesPage: React.FC = () => {
       setBusinesses([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSessions = async () => {
+    setLoadingSessions(true);
+    setSessionsError(null);
+    try {
+      const response = await fetch('https://revivepropertyco.au/api/hp-businesses/sessions?limit=5', {
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      if (data.success) {
+        setSessions(data.data || []);
+      } else {
+        throw new Error(data.error || 'Failed to load sessions');
+      }
+    } catch (err) {
+      console.error('Error loading scrape sessions:', err);
+      setSessionsError(err instanceof Error ? err.message : 'Failed to load sessions');
+    } finally {
+      setLoadingSessions(false);
     }
   };
 
@@ -152,6 +214,10 @@ const HipagesBusinessesPage: React.FC = () => {
 
   const handleContact = async (business: HpBusiness, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!hasToken) {
+      alert('Authentication required to perform status updates.');
+      return;
+    }
     if (
       !confirm(`Mark "${business.business_name}" as CONTACTED?`)
     )
@@ -163,7 +229,10 @@ const HipagesBusinessesPage: React.FC = () => {
         `https://revivepropertyco.au/api/hp-businesses/businesses/${business.id}/status`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ lead_status: 'CONTACTED' }),
         }
       );
@@ -190,6 +259,10 @@ const HipagesBusinessesPage: React.FC = () => {
 
   const handleArchive = async (business: HpBusiness, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!hasToken) {
+      alert('Authentication required to archive businesses.');
+      return;
+    }
     if (!confirm(`Archive "${business.business_name}"?`)) return;
 
     setProcessingAction(business.id);
@@ -198,7 +271,10 @@ const HipagesBusinessesPage: React.FC = () => {
         `https://revivepropertyco.au/api/hp-businesses/businesses/${business.id}/status`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ lead_status: 'ARCHIVED' }),
         }
       );
@@ -220,6 +296,37 @@ const HipagesBusinessesPage: React.FC = () => {
       alert('Failed to archive. Please try again.');
     } finally {
       setProcessingAction(null);
+    }
+  };
+
+  const handleTriggerScrape = async () => {
+    if (!hasToken) {
+      alert('Authentication required to trigger scraper.');
+      return;
+    }
+    if (!confirm('Are you sure you want to trigger a manual scrape run?')) return;
+    setTriggeringScrape(true);
+    try {
+      const response = await fetch('https://revivepropertyco.au/api/hp-businesses/scrape/trigger', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({})
+      });
+      if (response.ok) {
+        alert('Scraper run triggered successfully in the background.');
+        setTimeout(() => loadSessions(), 1000);
+      } else {
+        const err = await response.json();
+        alert(`Failed to trigger scrape: ${err.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error('Error triggering scrape:', err);
+      alert('Failed to trigger scraper. Please try again.');
+    } finally {
+      setTriggeringScrape(false);
     }
   };
 
@@ -287,6 +394,132 @@ const HipagesBusinessesPage: React.FC = () => {
             </p>
           </div>
         )}
+
+        {/* Scraper Operations Panel */}
+        <div className="mb-8 bg-white border border-slate-200 p-6 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-[0.2em] text-[#36453B]">
+                Scraper Operations & Sessions
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Monitor and trigger background directory synchronization
+              </p>
+            </div>
+            <button
+              onClick={handleTriggerScrape}
+              disabled={triggeringScrape || !hasToken}
+              className="px-6 py-3 bg-[#121212] text-white text-[9px] font-black uppercase tracking-[0.3em] hover:bg-[#36453B] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+            >
+              {triggeringScrape ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  Triggering Scrape...
+                </>
+              ) : (
+                'Trigger Scrape'
+              )}
+            </button>
+          </div>
+
+          {sessionsError && (
+            <div className="p-4 mb-4 bg-rose-50 border-l-2 border-rose-500 text-xs text-rose-800 font-medium">
+              Failed to load sessions: {sessionsError}
+            </div>
+          )}
+
+          {loadingSessions && sessions.length === 0 ? (
+            <div className="flex justify-center py-6">
+              <RefreshCw className="w-6 h-6 text-slate-400 animate-spin" />
+            </div>
+          ) : sessions.length === 0 ? (
+            <div className="text-center py-6 border border-dashed border-slate-200">
+              <p className="text-xs text-slate-400">No scrape sessions recorded</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-100 bg-white text-left">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-wider">
+                      Session ID
+                    </th>
+                    <th className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-wider">
+                      Trade / Location
+                    </th>
+                    <th className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-wider">
+                      Started At
+                    </th>
+                    <th className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-wider">
+                      Completed At
+                    </th>
+                    <th className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-wider text-right">
+                      Found / New / Upd
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {sessions.map((session) => (
+                    <tr key={session.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 font-mono text-[10px] text-slate-500">
+                        {session.id.substring(0, 8)}...
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-wider border ${
+                            session.status === 'completed'
+                              ? 'bg-green-50 text-green-700 border-green-200'
+                              : session.status === 'failed'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse'
+                          }`}
+                        >
+                          {session.status}
+                        </span>
+                        {session.status === 'failed' && session.error_message && (
+                          <div className="text-[10px] text-rose-600 mt-1 max-w-xs truncate font-mono" title={session.error_message}>
+                            Error: {session.error_message}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">
+                        {session.trade_category || 'All'} • {session.location || 'All'}
+                      </td>
+                      <td className="px-4 py-3 text-slate-500">
+                        {new Date(session.started_at).toLocaleString('en-AU', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          timeZone: 'Australia/Sydney'
+                        })}
+                      </td>
+                      <td className="px-4 py-3 text-slate-500">
+                        {session.completed_at
+                          ? new Date(session.completed_at).toLocaleString('en-AU', {
+                              day: 'numeric',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              timeZone: 'Australia/Sydney'
+                            })
+                          : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-slate-700">
+                        {session.businesses_found} /{' '}
+                        <span className="text-green-600">{session.businesses_new}</span> /{' '}
+                        <span className="text-blue-600">{session.businesses_updated}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
 
         {/* Filters */}
         <div className="mb-8 flex flex-wrap gap-6 items-center bg-white p-6 border border-slate-200 shadow-sm">
@@ -560,7 +793,8 @@ const HipagesBusinessesPage: React.FC = () => {
                           onClick={(e) => handleContact(business, e)}
                           disabled={
                             processingAction === business.id ||
-                            business.lead_status === 'ARCHIVED'
+                            business.lead_status === 'ARCHIVED' ||
+                            !hasToken
                           }
                           className="p-1.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                           title="Mark as Contacted"
@@ -571,7 +805,8 @@ const HipagesBusinessesPage: React.FC = () => {
                           onClick={(e) => handleArchive(business, e)}
                           disabled={
                             processingAction === business.id ||
-                            business.lead_status === 'ARCHIVED'
+                            business.lead_status === 'ARCHIVED' ||
+                            !hasToken
                           }
                           className="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                           title="Archive"
@@ -814,7 +1049,8 @@ const HipagesBusinessesPage: React.FC = () => {
                         onClick={(e) => handleContact(selectedBusiness, e)}
                         disabled={
                           processingAction === selectedBusiness.id ||
-                          selectedBusiness.lead_status === 'ARCHIVED'
+                          selectedBusiness.lead_status === 'ARCHIVED' ||
+                          !hasToken
                         }
                         className="px-4 py-2 bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                       >
@@ -825,7 +1061,8 @@ const HipagesBusinessesPage: React.FC = () => {
                         onClick={(e) => handleArchive(selectedBusiness, e)}
                         disabled={
                           processingAction === selectedBusiness.id ||
-                          selectedBusiness.lead_status === 'ARCHIVED'
+                          selectedBusiness.lead_status === 'ARCHIVED' ||
+                          !hasToken
                         }
                         className="px-4 py-2 bg-slate-200 text-slate-700 text-[9px] font-black uppercase tracking-widest hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                       >

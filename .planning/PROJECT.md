@@ -148,6 +148,35 @@ Revive Property Co. is a property services company serving Canberra ACT, offerin
 - Production deployment successful
 - User testing confirms all features work as expected
 
+## Current Milestone: v1.1-opportunities CRM Opportunity Integration
+
+**Goal:** Enable promoting scraped Hipages leads directly to Twenty CRM Opportunities from the admin dashboard, preserving all relevant data.
+
+**Target features:**
+- Lead promote API endpoint to create standard CRM Opportunity linked to Person.
+- Complete data mapping from Hipages lead details (posted date, location, description, value/credits, category) to Opportunity fields.
+- UI Promote action in the contractors leads page indicating sync status and direct link.
+- E2E testing using Playwright to verify the flow.
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
 
 *Project initialized: 2026-04-13*
+*Last updated: 2026-05-30*
+

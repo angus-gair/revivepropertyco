@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.1-opportunities
 milestone_name: CRM Opportunity Integration
 status: planning
-last_updated: "2026-05-30T10:43:11.170Z"
-last_activity: 2026-05-30
+last_updated: "2026-05-30T10:45:00.000Z"
+last_activity: 2026-05-30 — Milestone v1.1-opportunities roadmap defined
 progress:
-  total_phases: 0
+  total_phases: 1
   completed_phases: 0
-  total_plans: 0
+  total_plans: 2
   completed_plans: 0
   percent: 0
 ---
@@ -17,30 +17,24 @@ progress:
 
 ## Project Reference
 
-See: .planning/SAAS-PLATFORM.md (updated 2026-04-20)
+See: .planning/PROJECT.md (updated 2026-05-30)
 
-**Core value:** Trade service businesses can build their own AI-powered operations platform by selecting only the modules they need — pay for what you use, nothing more.
+**Core value:** Automatically promote scraped Hipages leads into Twenty CRM Opportunities directly from the admin dashboard to streamline client acquisition.
 
-**Current focus:** Phase 4 - Real-time Lead Sync
-
-## Scope Change (2026-04-21)
-
-Project re-scoped from 7 phases to 4 phases for MVP launch. Phases 5-8 (AI Quotes, SEO/Content, Competitor Analysis, Billing) deferred to future project.
-
-**Goal:** Get CRM + lead scraper live and tested in production before expanding scope.
+**Current focus:** Phase 5 - CRM Opportunity Integration
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Phase 5: CRM Opportunity Integration
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-30 — Milestone v1.1-opportunities started
+Status: Awaiting Phase 5 context gathering
+Last activity: 2026-05-30 — Milestone v1.1-opportunities roadmap defined
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 13
+- Total plans completed: 15
 - Average duration: ~45 min
 - Total execution time: ~10 hours
 
@@ -51,6 +45,7 @@ Last activity: 2026-05-30 — Milestone v1.1-opportunities started
 | 01 | 6 | ~8 hours | ~80 min |
 | 02 | 6 | ~2 hours | ~20 min |
 | 03 | 1 | ~20 min | ~20 min |
+| 04 | 2 | ~1 hour | ~30 min |
 
 **Recent Trend:**
 
@@ -63,17 +58,11 @@ Last activity: 2026-05-30 — Milestone v1.1-opportunities started
 
 ### Decisions
 
-Decisions are logged in SAAS-PLATFORM.md Key Decisions table.
-Recent decisions affecting current work:
-
-**2026-04-21:** Re-scoped project from 7 to 4 phases. Phases 5-8 deferred to future project. Goal is MVP launch with CRM + lead scraper fully operational.
+Decisions are logged in PROJECT.md.
 
 ### Pending Todos
 
-- Complete Phase 4 planning (PATTERNS.md → PLAN files)
-- Execute Phase 4 plans
-- Production deployment and testing
-- Create handoff documentation for future project
+None yet.
 
 ### Blockers/Concerns
 
@@ -81,11 +70,11 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-30T06:43:19.154Z
-Stopped at: Phase 4 context gathered
-Next: Phase 4 planning (Real-time Lead Sync)
-Resume file: .planning/phases/04-realtime-lead-sync/04-CONTEXT.md
+Last session: 2026-05-30T10:43:11.170Z
+Stopped at: Milestone v1.1-opportunities started
+Next: Phase 5 context gathering
+Resume file: .planning/phases/05-crm-opportunity-integration/05-CONTEXT.md
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Start Phase 5 context gathering with /gsd-discuss-phase 5

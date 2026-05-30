@@ -306,6 +306,139 @@ Suburb: ${hipagesLead.suburb}${hipagesLead.postcode ? ` ${hipagesLead.postcode}`
 });
 
 /**
+ * POST /api/hipages/leads/:id/promote-opportunity - Promote hipages lead to Twenty CRM Opportunity
+ */
+router.post('/leads/:id/promote-opportunity', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Get hipages lead
+    const hipagesResult = await client.query(
+      'SELECT * FROM hipages_leads WHERE lead_id = $1',
+      [req.params.id]
+    );
+
+    if (hipagesResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'Lead not found' });
+    }
+
+    const hipagesLead = hipagesResult.rows[0];
+
+    if (hipagesLead.synced_to_crm) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, error: 'Lead has already been promoted' });
+    }
+
+    // Try to get dynamic workspace/token for tenant if authenticated
+    let apiToken = process.env.TWENTY_API_TOKEN;
+    let serverUrl = process.env.TWENTY_SERVER_URL || 'http://twenty:3000';
+
+    if (req.user && req.user.tenantId) {
+      const workspaceResult = await client.query(
+        'SELECT * FROM twenty_workspaces WHERE tenant_id = $1',
+        [req.user.tenantId]
+      );
+      if (workspaceResult.rows.length > 0) {
+        const workspace = workspaceResult.rows[0];
+        serverUrl = workspace.server_url;
+        // get decrypted token
+        const { getToken } = require('../lib/twenty-token-storage.cjs');
+        const tokenData = await getToken(req.user.tenantId, workspace.workspace_id, 'API');
+        if (tokenData) {
+          apiToken = tokenData.token;
+        }
+      }
+    }
+
+    // If no apiToken is configured, return error
+    if (!apiToken || apiToken === 'generate-after-twenty-setup') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        success: false,
+        error: 'Twenty CRM integration is not configured. Please set TWENTY_API_TOKEN.'
+      });
+    }
+
+    // Parse customer name into first and last name
+    const nameParts = hipagesLead.customer_name.trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Initialize Twenty client
+    const { TwentyClient } = require('../lib/twenty-client.cjs');
+    const twentyClient = new TwentyClient(apiToken, serverUrl);
+
+    // 1. Search or create Person in Twenty
+    let personId;
+    try {
+      const existingPerson = await twentyClient.findPersonByName(firstName, lastName);
+      if (existingPerson) {
+        personId = existingPerson.id;
+      } else {
+        const newPerson = await twentyClient.createPerson({
+          firstName,
+          lastName,
+          email: undefined,
+          phone: undefined
+        });
+        personId = newPerson.id;
+      }
+    } catch (err) {
+      console.error('[hipages] Error checking/creating Person in Twenty:', err);
+      throw new Error(`Twenty CRM Person matching failed: ${err.message}`);
+    }
+
+    // 2. Create Opportunity in Twenty linked to Person
+    const optName = `${hipagesLead.job_type} - ${hipagesLead.customer_name} - ${hipagesLead.suburb}`;
+    const creditsCost = parseInt(hipagesLead.credits) || 0;
+    const amountVal = creditsCost * 20;
+    const amountAmountMicros = amountVal * 1000000;
+
+    let opportunityId;
+    try {
+      const newOpt = await twentyClient.createOpportunity({
+        name: optName,
+        amountAmountMicros,
+        amountCurrencyCode: 'AUD',
+        stage: 'NEW',
+        pointOfContactId: personId
+      });
+      opportunityId = newOpt.id;
+    } catch (err) {
+      console.error('[hipages] Error creating Opportunity in Twenty:', err);
+      throw new Error(`Twenty CRM Opportunity creation failed: ${err.message}`);
+    }
+
+    // Update local database hipages_leads
+    await client.query(
+      'UPDATE hipages_leads SET synced_to_crm = TRUE, crm_opportunity_id = $1 WHERE lead_id = $2',
+      [opportunityId, req.params.id]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      data: {
+        hipagesLeadId: req.params.id,
+        crmOpportunityId: opportunityId,
+        personId
+      }
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('[hipages] Error promoting lead to CRM Opportunity:', error);
+    res.status(500).json({ success: false, error: error.message || 'Failed to promote lead' });
+  } finally {
+    client.release();
+  }
+});
+
+
+/**
  * POST /api/hipages/scrape/trigger - Manual scrape trigger (admin only)
  */
 router.post('/scrape/trigger', async (req, res) => {

@@ -246,6 +246,48 @@ class TwentyClient {
   }
 
   /**
+   * Find Person by name
+   * @param {string} firstName - First name
+   * @param {string} lastName - Last name
+   */
+  async findPersonByName(firstName, lastName) {
+    const query = `
+      query people($firstName: String, $lastName: String) {
+        people(filter: { firstName: { eq: $firstName }, lastName: { eq: $lastName } }) {
+          id
+          firstName
+          lastName
+          email
+          phone
+        }
+      }
+    `;
+    const result = await this.graphql(query, { firstName, lastName });
+    return result.people?.[0] || null;
+  }
+
+  /**
+   * Create an Opportunity in Twenty
+   * @param {object} data - Opportunity data (name, amountAmountMicros, amountCurrencyCode, stage, pointOfContactId)
+   */
+  async createOpportunity(data) {
+    const mutation = `
+      mutation createOneOpportunity($data: OpportunityCreateInput!) {
+        createOneOpportunity(data: $data) {
+          id
+          name
+          amountAmountMicros
+          amountCurrencyCode
+          stage
+        }
+      }
+    `;
+    const result = await this.graphql(mutation, { data });
+    return result.createOneOpportunity;
+  }
+
+
+  /**
    * Test connection to Twenty API
    */
   async testConnection() {

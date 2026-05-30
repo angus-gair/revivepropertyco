@@ -353,3 +353,33 @@ export interface TenantTwentyToken {
   expiresAt?: string;
   createdAt: string;
 }
+
+export interface HpBusiness {
+  id: string;
+  hipages_profile_id: string | null;
+  business_name: string;
+  slug: string | null;
+  suburb: string | null;
+  state: string | null;
+  postcode: string | null;
+  primary_trade: string | null;
+  trade_categories: string[] | null;
+  rating: number | null;
+  review_count: number;
+  job_count: number;
+  response_rate: string | null;
+  years_on_hipages: number | null;
+  profile_url: string | null;
+  phone: string | null;
+  website: string | null;
+  verified: boolean;
+  badge_level: string | null;
+  description: string | null;
+  service_areas: string[] | null;
+  images_count: number;
+  lead_status: 'NEW' | 'CONTACTED' | 'CONVERTED' | 'ARCHIVED';
+  scraped_at: string;
+  last_updated: string;
+  raw_data: any | null;
+  created_at: string;
+}

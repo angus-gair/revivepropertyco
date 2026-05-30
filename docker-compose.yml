@@ -59,6 +59,7 @@ services:
       - NODE_ENV=production
       - PORT=8080
       - DATABASE_URL=postgresql://homelab:BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg@postgres:5432/revivepropertyco
+      - HP_BUSINESSES_DB_URL=postgresql://homelab:BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg@postgres:5432/hipages_directory
       - JWT_SECRET=revive-property-jwt-secret-2026-production-secure
       - RESEND_API_KEY=re_HhXXXXXX
       - RESEND_FROM=Revive Property Co. <info@revivepropertyco.au>
@@ -123,6 +124,34 @@ services:
       timeout: 10s
       retries: 3
 
+  hp-business-scraper:
+    build:
+      context: ./services/hp-business-scraper
+      dockerfile: Dockerfile
+    container_name: revive-hp-business-scraper
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - HP_BUSINESSES_DB_URL=postgresql://homelab:BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg@postgres:5432/hipages_directory
+      - HIPAGES_HEADLESS=true
+      - CRON_SCHEDULE=0 2 * * *
+      - MAX_PAGES_PER_TRADE=5
+      - SCRAPE_LOCATION=sydney-nsw
+    networks:
+      - homelab_internal
+    volumes:
+      - hp-business-output:/app/output
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "node", "-e", "new (require('pg').Client)(process.env.HP_BUSINESSES_DB_URL).connect().then(() => process.exit(0)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Twenty CRM Services
   twenty-db:
     image: postgres:15-alpine
@@ -167,6 +196,11 @@ services:
       - SERVER_URL=${TWENTY_SERVER_URL}
       - FRONT_BASE_URL=${TWENTY_SERVER_URL}
       - APP_SECRET=${TWENTY_APP_SECRET}
+      - PGHOST=twenty-db
+      - PGPORT=5432
+      - PGDATABASE=twenty_crms
+      - PGUSER=twenty
+      - PGPASSWORD=${TWENTY_DB_PASSWORD}
     depends_on:
       twenty-db:
         condition: service_healthy
@@ -194,6 +228,11 @@ services:
       - REDIS_URL=redis://twenty-redis:6379
       - SERVER_URL=${TWENTY_SERVER_URL}
       - APP_SECRET=${TWENTY_APP_SECRET}
+      - PGHOST=twenty-db
+      - PGPORT=5432
+      - PGDATABASE=twenty_crms
+      - PGUSER=twenty
+      - PGPASSWORD=${TWENTY_DB_PASSWORD}
     depends_on:
       - twenty-db
       - twenty-redis
@@ -204,6 +243,7 @@ services:
 volumes:
   customer-uploads:
   hipages-output:
+  hp-business-output:
   twenty-data:
   twenty-redis:
 

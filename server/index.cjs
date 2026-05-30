@@ -24,6 +24,7 @@ const customerRouter = require('./api/customer.cjs');
 const customerDocumentsRouter = require('./api/customerDocuments.cjs');
 const customerQuotesRouter = require('./api/customerQuotes.cjs');
 const hipagesRouter = require('./api/hipages.cjs');
+const hpBusinessesRouter = require('./api/hp-businesses.cjs');
 const platformRouter = require('./api/platform.cjs');
 const authPlatformRouter = require('./api/auth-platform.cjs');
 const invitationsRouter = require('./api/invitations.cjs');
@@ -89,6 +90,7 @@ app.use('/api/customer', customerRouter);
 app.use('/api/customer', customerDocumentsRouter);
 app.use('/api/customer', customerQuotesRouter);
 app.use('/api/hipages', hipagesRouter);
+app.use('/api/hp-businesses', hpBusinessesRouter);
 // Platform API routes (multi-tenant)
 app.use('/api/platform', platformRouter);
 app.use('/api/auth/platform', authPlatformRouter);
@@ -96,6 +98,13 @@ app.use('/api/auth/platform', authPlatformRouter);
 app.use('/api/invitations', invitationsRouter);
 // Twenty CRM webhooks
 app.use('/api/twenty', twentyWebhooksRouter);
+
+// Serve static files from Vite build (production only)
+if (process.env.NODE_ENV === 'production') {
+  const path = require('path');
+  app.use(express.static(path.join(process.cwd(), 'dist')));
+  console.log('✓ Serving static files from dist/');
+}
 
 // Health check
 app.get('/health', (req, res) => {
@@ -107,13 +116,37 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 404 handler
-app.use((req, res) => {
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
   res.status(404).json({
     success: false,
-    error: 'Endpoint not found'
+    error: 'API endpoint not found'
   });
 });
+
+// Client-side routing support (serve index.html for all non-API routes in production)
+if (process.env.NODE_ENV === 'production') {
+  const path = require('path');
+  app.get('*', (req, res) => {
+    // Don't interfere with API routes
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({
+        success: false,
+        error: 'API endpoint not found'
+      });
+    }
+    // Serve index.html for client-side routing
+    res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+  });
+} else {
+  // Development: 404 for non-API routes
+  app.use((req, res) => {
+    res.status(404).json({
+      success: false,
+      error: 'Endpoint not found'
+    });
+  });
+}
 
 // Error handler
 app.use((err, req, res, next) => {

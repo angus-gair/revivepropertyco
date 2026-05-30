@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminRegrouting from './pages/AdminRegrouting';
 import AdminTeleQuote from './pages/AdminTeleQuote';
 import HipagesLeadsNoAuthPage from './pages/admin/HipagesLeadsNoAuthPage';
+import HipagesBusinessesPage from './pages/admin/HipagesBusinessesPage';
 import ServicePressureWashing from './pages/ServicePressureWashing';
 import ServiceGardenMaintenance from './pages/ServiceGardenMaintenance';
 import ServicePoolMaintenance from './pages/ServicePoolMaintenance';
@@ -91,6 +92,7 @@ const App: React.FC = () => {
                   }
                 />
                 <Route path="/contractors/hp-leads" element={<HipagesLeadsNoAuthPage />} />
+                <Route path="/contractors/hp-businesses" element={<HipagesBusinessesPage />} />
                 {/* Customer Portal Routes */}
                 <Route path="/customer/login" element={<CustomerLoginPage />} />
                 <Route path="/customer/register" element={<CustomerRegisterPage />} />

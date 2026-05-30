@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'list',
   use: {
-    baseURL: 'https://revivepropertyco.au',
+    baseURL: 'http://localhost:3333',
     trace: 'on-first-retry',
   },
 
@@ -18,4 +18,11 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
+
+  webServer: {
+    command: 'npx vite --port 3333 --host 127.0.0.1',
+    url: 'http://localhost:3333',
+    reuseExistingServer: !process.env.CI,
+    timeout: 30000,
+  },
 });

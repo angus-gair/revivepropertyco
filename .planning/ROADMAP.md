@@ -95,7 +95,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Admin dashboard shows scraper status, last run, and lead counts
   4. Failed scrapes are logged and retried with exponential backoff
   5. Rate limiting prevents hipages blocking
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+
+**Plan Breakdown:**
+- Wave 1:
+  - [x] 04-01-PLAN.md — Production scraper cron, retries, PG notifies, and Socket.IO broadcaster
+- Wave 2:
+  - [ ] 04-02-PLAN.md — Real-time UI integration, scraper operations panel, and Playwright E2E tests
 
 ### Future Project: AI SaaS Platform
 **Planned Phases:**
@@ -116,4 +122,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Platform Core & Authentication | 6/6 | Complete | 2026-04-20 |
 | 2. Twenty CRM Integration | 6/6 | Complete | 2026-04-21 |
 | 3. Hipages Leads Module | 1/1 | Complete | 2026-05-30 |
-| 4. Real-time Lead Sync | 0/0 | Not started | - |
+| 4. Real-time Lead Sync | 1/2 | In progress | - |

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { usePageSEO } from '../../hooks/usePageSEO';
 import { SEO } from '../../seoConfig';
 import { HipagesLead, HipagesLeadStatus } from '../../types';
-import { Search, RefreshCw, Filter, Bell, Image as ImageIcon, Wifi, WifiOff, Check, X } from 'lucide-react';
+import { Search, RefreshCw, Filter, Bell, Image as ImageIcon, Wifi, WifiOff, Check, X, TrendingUp, ExternalLink } from 'lucide-react';
 import { ImageLightbox } from '../../components/ImageLightbox';
 
 type SortField = 'posted_date' | 'credits' | 'customer_name' | 'suburb';
@@ -217,6 +217,39 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
     }
   };
 
+  // Handle promote action
+  const handlePromote = async (lead: HipagesLead) => {
+    if (!confirm(`Promote lead from ${lead.customer_name || 'Unknown'} to Twenty CRM Opportunity?`)) {
+      return;
+    }
+
+    setProcessingAction(lead.lead_id);
+    try {
+      const response = await fetch(`https://revivepropertyco.au/api/hipages/leads/${lead.lead_id}/promote-opportunity`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('revive_admin_token') || ''}`
+        },
+        body: JSON.stringify({})
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Lead promoted successfully! CRM Opportunity ID: ${result.data.crmOpportunityId}`);
+        await loadLeads(); // Refresh data
+      } else {
+        const error = await response.json();
+        alert(`Failed to promote lead: ${error.error || 'Unknown error'}`);
+      }
+    } catch (e) {
+      console.error('Error promoting lead:', e);
+      alert('Failed to promote lead. Please try again.');
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
   // Sort handler
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -399,6 +432,7 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
                   const rawData = typeof lead.raw_data === 'string' ? JSON.parse(lead.raw_data) : (lead.raw_data || {});
                   const images = getLeadImages(lead);
                   const hasImagesCount = images.length;
+                  const isSynced = lead.synced_to_crm || lead.syncedToCrm;
 
                   return (
                     <tr
@@ -487,9 +521,30 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-2 justify-center">
+                          {isSynced ? (
+                            <a
+                              href="https://crm.revivepropertyco.au/objects/opportunities"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-black uppercase tracking-wider hover:bg-blue-100"
+                              title="View Opportunity in Twenty CRM"
+                            >
+                              <TrendingUp className="w-3 h-3" />
+                              Synced
+                            </a>
+                          ) : (
+                            <button
+                              onClick={() => handlePromote(lead)}
+                              disabled={processingAction === lead.lead_id}
+                              className="p-1 bg-purple-100 text-purple-700 hover:bg-purple-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              title="Promote to CRM"
+                            >
+                              <TrendingUp className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleAccept(lead)}
-                            disabled={processingAction === lead.lead_id || lead.syncedToCrm}
+                            disabled={processingAction === lead.lead_id || isSynced}
                             className="p-1 bg-green-100 text-green-700 rounded hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             title="Accept Lead"
                           >
@@ -693,7 +748,31 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
                   )}
 
                   {/* Footer Actions */}
-                  <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 mt-6">
+                  <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 mt-6 items-center">
+                    {selectedLead && (selectedLead.synced_to_crm || selectedLead.syncedToCrm) ? (
+                      <a
+                        href="https://crm.revivepropertyco.au/objects/opportunities"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold uppercase tracking-wider hover:bg-blue-100 flex items-center gap-1.5"
+                      >
+                        <ExternalLink size={14} /> Opportunity Created
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (selectedLead) {
+                            handlePromote(selectedLead).then(() => {
+                              setSelectedLead(prev => prev ? { ...prev, synced_to_crm: true, syncedToCrm: true } : null);
+                            });
+                          }
+                        }}
+                        disabled={processingAction === selectedLead?.lead_id}
+                        className="px-4 py-2 bg-[#121212] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#36453B] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all"
+                      >
+                        <TrendingUp size={14} /> Promote to CRM
+                      </button>
+                    )}
                     <button
                       onClick={() => setSelectedLead(null)}
                       className="px-6 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"

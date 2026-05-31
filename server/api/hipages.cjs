@@ -411,6 +411,33 @@ router.post('/leads/:id/promote-opportunity', async (req, res) => {
       throw new Error(`Twenty CRM Opportunity creation failed: ${err.message}`);
     }
 
+    // 3. Create Note in Twenty linked to Opportunity
+    const postedStr = hipagesLead.posted_date ? new Date(hipagesLead.posted_date).toISOString() : 'Unknown';
+    const noteMarkdown = `### Hipages Lead Details
+- **Lead ID:** ${hipagesLead.lead_id}
+- **Job Type:** ${hipagesLead.job_type}${hipagesLead.job_subtype ? ` (${hipagesLead.job_subtype})` : ''}
+- **Description:** ${hipagesLead.description || 'No description'}
+- **Location:** ${hipagesLead.suburb}${hipagesLead.postcode ? ` ${hipagesLead.postcode}` : ''}
+- **Credits:** ${hipagesLead.credits}
+- **Status:** ${hipagesLead.status}
+- **Contact Status:** ${hipagesLead.contact_status || 'Unknown'}
+- **Posted Date:** ${postedStr}`;
+
+    try {
+      await twentyClient.createNote({
+        body: noteMarkdown,
+        noteTargets: {
+          create: [
+            {
+              opportunityId
+            }
+          ]
+        }
+      });
+    } catch (err) {
+      console.warn('[hipages] Warning: Failed to create note in Twenty for Opportunity:', err.message);
+    }
+
     // Update local database hipages_leads
     await client.query(
       'UPDATE hipages_leads SET synced_to_crm = TRUE, crm_opportunity_id = $1 WHERE lead_id = $2',

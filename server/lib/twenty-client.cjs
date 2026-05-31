@@ -286,6 +286,23 @@ class TwentyClient {
     return result.createOneOpportunity;
   }
 
+  /**
+   * Create a Note in Twenty
+   * @param {object} data - Note data (body, noteTargets)
+   */
+  async createNote(data) {
+    const mutation = `
+      mutation createOneNote($data: NoteCreateInput!) {
+        createOneNote(data: $data) {
+          id
+          body
+        }
+      }
+    `;
+    const result = await this.graphql(mutation, { data });
+    return result.createOneNote;
+  }
+
 
   /**
    * Test connection to Twenty API

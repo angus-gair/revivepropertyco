@@ -1,5 +1,5 @@
 ---
-status: awaiting_human_verify
+status: resolved
 trigger: "HiPages leads page returns 404 and shows blank page after recent deployment"
 created: 2026-04-30T00:00:00Z
 updated: 2026-04-30T05:36:00Z

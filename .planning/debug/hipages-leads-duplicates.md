@@ -1,5 +1,5 @@
 ---
-status: awaiting_human_verify
+status: resolved
 trigger: "hipages-leads-duplicates investigation"
 created: 2026-04-15T12:00:00Z
 updated: 2026-04-15T12:25:00Z

@@ -1,5 +1,5 @@
 ---
-status: investigating
+status: resolved
 trigger: "claude-ajinsights-com-au-404"
 created: 2025-01-14T00:00:00.000Z
 updated: 2025-01-14T00:00:00.000Z

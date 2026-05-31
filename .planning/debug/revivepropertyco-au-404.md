@@ -1,5 +1,5 @@
 ---
-status: awaiting_human_verify
+status: resolved
 trigger: "Persistent 404 error on the webapp revivepropertyco.au"
 created: 2026-05-14T00:00:00.000Z
 updated: 2026-05-14T00:00:06.000Z

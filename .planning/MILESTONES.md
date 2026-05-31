@@ -1,5 +1,16 @@
 # Milestones
 
+## v1.1-opportunities v1.1-opportunities (Shipped: 2026-05-31)
+
+**Phases completed:** 1 phases, 2 plans, 7 tasks
+
+**Key accomplishments:**
+
+- Promote API endpoint created to verify, match, or create a Person and generate a new Opportunity in Twenty CRM linked to local lead database
+- Frontend dashboard actions implemented with Twenty CRM Note attachments and Playwright E2E integration tests passing successfully
+
+---
+
 ## v1.0-mvp v1.0-mvp (Shipped: 2026-05-30)
 
 **Phases completed:** 4 phases, 15 plans, 26 tasks

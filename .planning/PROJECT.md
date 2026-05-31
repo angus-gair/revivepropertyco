@@ -148,15 +148,18 @@ Revive Property Co. is a property services company serving Canberra ACT, offerin
 - Production deployment successful
 - User testing confirms all features work as expected
 
-## Current Milestone: v1.1-opportunities CRM Opportunity Integration
+## Current Milestone: Planning next milestone
 
-**Goal:** Enable promoting scraped Hipages leads directly to Twenty CRM Opportunities from the admin dashboard, preserving all relevant data.
+**Status:** Milestone v1.1-opportunities completed on 2026-05-31.
 
-**Target features:**
-- Lead promote API endpoint to create standard CRM Opportunity linked to Person.
-- Complete data mapping from Hipages lead details (posted date, location, description, value/credits, category) to Opportunity fields.
-- UI Promote action in the contractors leads page indicating sync status and direct link.
-- E2E testing using Playwright to verify the flow.
+## Completed Milestones
+
+### v1.1-opportunities (Shipped: 2026-05-31)
+- **Goal:** Promote scraped Hipages leads directly to Twenty CRM Opportunities.
+- **Scope:** API promotion, Person matching/creation, Opportunity mapping, Notes attachment, UI CTAs, and Playwright E2E tests.
+
+### v1.0-mvp (Shipped: 2026-05-30)
+- **Goal:** Multi-tenant platform foundations, customer portal registration/auth, self-hosted Twenty CRM integration.
 
 ## Evolution
 

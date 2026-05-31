@@ -1,5 +1,5 @@
 ---
-status: awaiting_human_verify
+status: resolved
 trigger: "JSON parse error on HiPages leads page - receiving HTML (<!DOCTYPE) instead of expected JSON"
 created: 2026-04-30T00:00:00.000Z
 updated: 2026-04-30T00:00:05.000Z

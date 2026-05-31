@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1-opportunities
 milestone_name: milestone
-status: executing
-stopped_at: Phase 5 UI-SPEC approved
-last_updated: "2026-05-31T02:16:25.228Z"
+status: complete
+stopped_at: Milestone v1.1-opportunities complete
+last_updated: "2026-05-31T02:22:30.000Z"
 last_activity: 2026-05-31
 progress:
   total_phases: 1
@@ -18,17 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-30)
+See: .planning/PROJECT.md (updated 2026-05-31)
 
 **Core value:** Automatically promote scraped Hipages leads into Twenty CRM Opportunities directly from the admin dashboard to streamline client acquisition.
 
-**Current focus:** Phase 5 — CRM Opportunity Integration
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
-Status: Executing Phase 5
+Phase: None
+Plan: None
+Status: Milestone Complete
 Last activity: 2026-05-31
 
 ## Performance Metrics
@@ -72,11 +72,11 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-31T01:07:37.520Z
-Stopped at: Phase 5 UI-SPEC approved
-Next: Phase 5 context gathering
-Resume file: .planning/phases/05-crm-opportunity-integration/05-UI-SPEC.md
+Last session: 2026-05-31T02:09:41Z
+Stopped at: Milestone v1.1-opportunities complete
+Next: Run /gsd-new-milestone to start next milestone
+Resume file: .planning/milestones/v1.1-opportunities-ROADMAP.md
 
 ## Operator Next Steps
 
-- Start Phase 5 context gathering with /gsd-discuss-phase 5
+- Run `/gsd-new-milestone` to start the next milestone

@@ -2,8 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1-opportunities
 milestone_name: CRM Opportunity Integration
-status: planning
-last_updated: "2026-05-30T10:45:00.000Z"
+status: Awaiting Phase 5 context gathering
+stopped_at: Phase 5 UI-SPEC approved
+last_updated: "2026-05-31T01:07:37.537Z"
 last_activity: 2026-05-30 — Milestone v1.1-opportunities roadmap defined
 progress:
   total_phases: 1
@@ -70,10 +71,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-30T10:43:11.170Z
-Stopped at: Milestone v1.1-opportunities started
+Last session: 2026-05-31T01:07:37.520Z
+Stopped at: Phase 5 UI-SPEC approved
 Next: Phase 5 context gathering
-Resume file: .planning/phases/05-crm-opportunity-integration/05-CONTEXT.md
+Resume file: .planning/phases/05-crm-opportunity-integration/05-UI-SPEC.md
 
 ## Operator Next Steps
 

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { query, pool } = require('../lib/database.cjs');
 const { authenticateToken } = require('../lib/auth.cjs');
+const { resolveTenantId } = require('../lib/tenant-context.cjs');
 const { v4: uuidv4 } = require('uuid');
 
 /**
@@ -263,9 +264,9 @@ Suburb: ${hipagesLead.suburb}${hipagesLead.postcode ? ` ${hipagesLead.postcode}`
     const leadResult = await client.query(`
       INSERT INTO leads (
         id, first_name, last_name, email, phone, address,
-        service_interest, notes, status, created_at
+        service_interest, notes, status, created_at, tenant_id
       ) VALUES (
-        gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9
+        gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
       ) RETURNING id
     `, [
       firstName,
@@ -276,7 +277,8 @@ Suburb: ${hipagesLead.suburb}${hipagesLead.postcode ? ` ${hipagesLead.postcode}`
       hipagesLead.job_type,
       notes,
       'NEW',
-      Date.now()
+      Date.now(),
+      resolveTenantId(req) // scraped leads belong to the Revive (default) tenant
     ]);
 
     const crmLeadId = leadResult.rows[0].id;

@@ -2,6 +2,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { authenticateToken } = require('../lib/auth.cjs');
 const { query } = require('../lib/database.cjs');
+const { resolveTenantId } = require('../lib/tenant-context.cjs');
 
 const router = express.Router();
 
@@ -14,7 +15,9 @@ router.get('/', authenticateToken, async (req, res) => {
       `SELECT q.*, l.first_name, l.last_name, l.email
        FROM quotes q
        JOIN leads l ON q.lead_id = l.id
-       ORDER BY q.created_at DESC`
+       WHERE q.tenant_id = $1
+       ORDER BY q.created_at DESC`,
+      [resolveTenantId(req)]
     );
 
     res.json({
@@ -46,12 +49,21 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     const quoteId = uuidv4();
-    const timestamp = Date.now();
+    const tenantId = resolveTenantId(req);
+
+    // Only allow quoting a lead that belongs to the caller's tenant.
+    const leadCheck = await query(
+      `SELECT 1 FROM leads WHERE id = $1 AND tenant_id = $2`,
+      [leadId, tenantId]
+    );
+    if (leadCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Lead not found' });
+    }
 
     await query(
-      `INSERT INTO quotes (id, lead_id, amount, status, valid_until, notes, created_at)
-       VALUES ($1, $2, $3, 'DRAFT', $4, $5, NOW() AT TIME ZONE 'UTC')`,
-      [quoteId, leadId, amount, validUntil || null, notes || null]
+      `INSERT INTO quotes (id, lead_id, amount, status, valid_until, notes, created_at, tenant_id)
+       VALUES ($1, $2, $3, 'DRAFT', $4, $5, NOW() AT TIME ZONE 'UTC', $6)`,
+      [quoteId, leadId, amount, validUntil || null, notes || null, tenantId]
     );
 
     // Fetch the newly created quote with lead details
@@ -59,8 +71,8 @@ router.post('/', authenticateToken, async (req, res) => {
       `SELECT q.*, l.first_name, l.last_name, l.email
        FROM quotes q
        JOIN leads l ON q.lead_id = l.id
-       WHERE q.id = $1`,
-      [quoteId]
+       WHERE q.id = $1 AND q.tenant_id = $2`,
+      [quoteId, tenantId]
     );
 
     res.status(201).json({
@@ -84,21 +96,29 @@ router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
-    const setClause = Object.keys(updates).map((key, i) => `${key} = $${i + 2}`).join(', ');
+    const tenantId = resolveTenantId(req);
+    const keys = Object.keys(updates);
+    const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
+    const idParam = keys.length + 1;
+    const tenantParam = keys.length + 2;
     const values = Object.values(updates);
 
-    await query(
-      `UPDATE quotes SET ${setClause} WHERE id = $1`,
-      [...values, id]
+    const updateResult = await query(
+      `UPDATE quotes SET ${setClause} WHERE id = $${idParam} AND tenant_id = $${tenantParam}`,
+      [...values, id, tenantId]
     );
+
+    if (updateResult.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Quote not found' });
+    }
 
     // Fetch updated quote
     const result = await query(
       `SELECT q.*, l.first_name, l.last_name, l.email
        FROM quotes q
        JOIN leads l ON q.lead_id = l.id
-       WHERE q.id = $1`,
-      [id]
+       WHERE q.id = $1 AND q.tenant_id = $2`,
+      [id, tenantId]
     );
 
     res.json({
@@ -122,7 +142,14 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    await query(`DELETE FROM quotes WHERE id = $1`, [id]);
+    const del = await query(
+      `DELETE FROM quotes WHERE id = $1 AND tenant_id = $2`,
+      [id, resolveTenantId(req)]
+    );
+
+    if (del.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Quote not found' });
+    }
 
     res.json({
       success: true,

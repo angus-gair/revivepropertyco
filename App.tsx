@@ -40,6 +40,8 @@ import CustomerQuotesPage from './pages/customer/QuotesPage';
 import RegisterPage from './pages/platform/RegisterPage';
 import LoginPlatformPage from './pages/platform/LoginPlatformPage';
 import PlatformDashboard from './pages/platform/PlatformDashboard';
+import PlatformTeamPage from './pages/platform/PlatformTeamPage';
+import PlatformModulesPage from './pages/platform/PlatformModulesPage';
 import PlatformProtectedRoute from './components/PlatformProtectedRoute';
 import { TenantAuthProvider } from './contexts/TenantAuthContext';
 
@@ -144,6 +146,22 @@ const App: React.FC = () => {
                   element={
                     <PlatformProtectedRoute>
                       <PlatformDashboard />
+                    </PlatformProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/platform/team"
+                  element={
+                    <PlatformProtectedRoute>
+                      <PlatformTeamPage />
+                    </PlatformProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/platform/modules"
+                  element={
+                    <PlatformProtectedRoute>
+                      <PlatformModulesPage />
                     </PlatformProtectedRoute>
                   }
                 />

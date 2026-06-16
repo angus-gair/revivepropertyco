@@ -6,8 +6,8 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { query, transaction } = require('../lib/database.cjs');
-const { generateTenantToken, hashPassword, comparePassword } = require('../lib/auth-platform.cjs');
-const { getTenantId } = require('../lib/tenant-context.cjs');
+const { generateTenantToken, hashPassword, comparePassword, authenticateTenantToken } = require('../lib/auth-platform.cjs');
+const { getTenantId, tenantMiddleware } = require('../lib/tenant-context.cjs');
 
 const router = express.Router();
 
@@ -200,6 +200,47 @@ router.get('/tenant', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch tenant information'
+    });
+  }
+});
+
+/**
+ * GET /api/platform/team
+ * List active team members (tenant_users) for the current tenant.
+ * Auth: Bearer tenant token. Pairs with the invitations API for pending invites.
+ */
+router.get('/team', authenticateTenantToken, tenantMiddleware, async (req, res) => {
+  try {
+    const tenantId = getTenantId();
+
+    const result = await query(
+      `SELECT id, email, role, first_name, last_name, status, last_login_at, created_at
+       FROM tenant_users
+       WHERE tenant_id = $1
+       ORDER BY
+         CASE role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,
+         created_at ASC`,
+      [tenantId]
+    );
+
+    res.json({
+      success: true,
+      members: result.rows.map(row => ({
+        id: row.id,
+        email: row.email,
+        role: row.role,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        status: row.status,
+        lastLoginAt: row.last_login_at,
+        createdAt: row.created_at
+      }))
+    });
+  } catch (error) {
+    console.error('List team error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch team members'
     });
   }
 });

@@ -148,7 +148,7 @@ const PlatformDashboard: React.FC = () => {
         {/* Coming Soon Notice */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-sm text-yellow-800">
-            <strong>Coming Soon:</strong> Team invitations, module activation, billing, and more features are under development.
+            <strong>Coming Soon:</strong> Billing and usage reporting are under development. Team invitations and module activation are now live.
           </p>
         </div>
       </main>

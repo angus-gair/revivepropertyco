@@ -5,6 +5,7 @@
 
 const express = require('express');
 const { query } = require('../lib/database.cjs');
+const { resolveTenantId } = require('../lib/tenant-context.cjs');
 const {
   generateToken,
   verifyToken,
@@ -77,10 +78,12 @@ router.post('/register', async (req, res) => {
       }
     }
 
-    // Check if mobile or email already exists
+    // Check if mobile or email already exists within this tenant
+    // (uniqueness is per-tenant; public form -> default Revive tenant)
+    const tenantId = resolveTenantId(req);
     const existingCustomer = await query(
-      'SELECT customer_id FROM customers WHERE mobile = $1 OR email = $2',
-      [mobile || null, email || null]
+      'SELECT customer_id FROM customers WHERE (mobile = $1 OR email = $2) AND tenant_id = $3',
+      [mobile || null, email || null, tenantId]
     );
 
     if (existingCustomer.rows.length > 0) {
@@ -93,12 +96,12 @@ router.post('/register', async (req, res) => {
     // Hash password
     const passwordHash = await hashPassword(password);
 
-    // Create customer account
+    // Create customer account (stamped with the resolved tenant)
     const result = await query(
-      `INSERT INTO customers (first_name, last_name, mobile, email, address, suburb, postcode, state, password_hash)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO customers (first_name, last_name, mobile, email, address, suburb, postcode, state, password_hash, tenant_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING customer_id, first_name, last_name, mobile, email, created_at`,
-      [firstName, lastName, mobile || null, email || null, address || null, suburb || null, postcode || null, state || 'ACT', passwordHash]
+      [firstName, lastName, mobile || null, email || null, address || null, suburb || null, postcode || null, state || 'ACT', passwordHash, tenantId]
     );
 
     const customer = result.rows[0];
@@ -149,12 +152,13 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Look up customer by mobile or email
+    // Look up customer by mobile or email, scoped to the tenant
+    // (identifier is unique per-tenant; public form -> default Revive tenant)
     const result = await query(
       `SELECT customer_id, first_name, last_name, mobile, email, password_hash, status
        FROM customers
-       WHERE mobile = $1 OR email = $1`,
-      [identifier]
+       WHERE (mobile = $1 OR email = $1) AND tenant_id = $2`,
+      [identifier, resolveTenantId(req)]
     );
 
     if (result.rows.length === 0) {

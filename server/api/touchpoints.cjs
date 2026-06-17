@@ -2,6 +2,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { authenticateToken } = require('../lib/auth.cjs');
 const { query } = require('../lib/database.cjs');
+const { resolveTenantId } = require('../lib/tenant-context.cjs');
 
 const router = express.Router();
 
@@ -14,14 +15,15 @@ router.post('/', authenticateToken, async (req, res) => {
     const touchpointId = uuidv4();
 
     await query(
-      `INSERT INTO touchpoints (id, lead_id, type, timestamp, metadata)
-       VALUES ($1, $2, $3, $4, $5::jsonb)`,
+      `INSERT INTO touchpoints (id, lead_id, type, timestamp, metadata, tenant_id)
+       VALUES ($1, $2, $3, $4, $5::jsonb, $6)`,
       [
         touchpointId,
         leadId || null,
         type,
         timestamp || Date.now(),
-        metadata ? JSON.stringify(metadata) : '{}'
+        metadata ? JSON.stringify(metadata) : '{}',
+        resolveTenantId(req)
       ]
     );
 
@@ -47,8 +49,8 @@ router.get('/lead/:leadId', authenticateToken, async (req, res) => {
     const { leadId } = req.params;
 
     const result = await query(
-      `SELECT * FROM touchpoints WHERE lead_id = $1 ORDER BY timestamp DESC`,
-      [leadId]
+      `SELECT * FROM touchpoints WHERE lead_id = $1 AND tenant_id = $2 ORDER BY timestamp DESC`,
+      [leadId, resolveTenantId(req)]
     );
 
     res.json({

@@ -2,18 +2,20 @@ const express = require('express');
 const router = express.Router();
 const { query } = require('../lib/database.cjs');
 const { authenticateToken } = require('../lib/auth.cjs');
+const { resolveTenantId } = require('../lib/tenant-context.cjs');
 const { v4: uuidv4 } = require('uuid');
 
 // Apply authentication to all CRM routes
 router.use(authenticateToken);
 
 /**
- * GET /api/crm/leads - Get all leads
+ * GET /api/crm/leads - Get all leads (tenant-scoped)
  */
 router.get('/leads', async (req, res) => {
   try {
     const result = await query(
-      `SELECT * FROM leads ORDER BY created_at DESC`
+      `SELECT * FROM leads WHERE tenant_id = $1 ORDER BY created_at DESC`,
+      [resolveTenantId(req)]
     );
     res.json(result.rows);
   } catch (error) {
@@ -28,7 +30,8 @@ router.get('/leads', async (req, res) => {
 router.get('/appointments', async (req, res) => {
   try {
     const result = await query(
-      `SELECT * FROM appointments ORDER BY date ASC, time_slot ASC`
+      `SELECT * FROM appointments WHERE tenant_id = $1 ORDER BY date ASC, time_slot ASC`,
+      [resolveTenantId(req)]
     );
     res.json(result.rows);
   } catch (error) {
@@ -43,7 +46,8 @@ router.get('/appointments', async (req, res) => {
 router.get('/tasks', async (req, res) => {
   try {
     const result = await query(
-      `SELECT * FROM tasks ORDER BY created_at DESC`
+      `SELECT * FROM tasks WHERE tenant_id = $1 ORDER BY created_at DESC`,
+      [resolveTenantId(req)]
     );
     res.json(result.rows);
   } catch (error) {
@@ -65,13 +69,14 @@ router.patch('/leads/:id', async (req, res) => {
     if (keys.length === 0) return res.status(400).json({ error: 'No updates provided' });
     
     const setClause = keys.map((key, i) => `${key} = $${i + 2}`).join(', ');
-    const values = [id, ...Object.values(updates)];
-    
+    const tenantParam = keys.length + 2;
+    const values = [id, ...Object.values(updates), resolveTenantId(req)];
+
     const result = await query(
-      `UPDATE leads SET ${setClause} WHERE id = $1 RETURNING *`,
+      `UPDATE leads SET ${setClause} WHERE id = $1 AND tenant_id = $${tenantParam} RETURNING *`,
       values
     );
-    
+
     if (result.rows.length === 0) return res.status(404).json({ error: 'Lead not found' });
     res.json(result.rows[0]);
   } catch (error) {
@@ -90,9 +95,9 @@ router.post('/tasks', async (req, res) => {
     const createdAt = Date.now();
     
     const result = await query(
-      `INSERT INTO tasks (id, lead_id, title, due_date, completed, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [id, leadId || null, title, dueDate || null, !!completed, createdAt]
+      `INSERT INTO tasks (id, lead_id, title, due_date, completed, created_at, tenant_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [id, leadId || null, title, dueDate || null, !!completed, createdAt, resolveTenantId(req)]
     );
     
     res.status(201).json(result.rows[0]);
@@ -112,13 +117,14 @@ router.patch('/tasks/:id', async (req, res) => {
     
     const keys = Object.keys(updates);
     const setClause = keys.map((key, i) => `${key} = $${i + 2}`).join(', ');
-    const values = [id, ...Object.values(updates)];
-    
+    const tenantParam = keys.length + 2;
+    const values = [id, ...Object.values(updates), resolveTenantId(req)];
+
     const result = await query(
-      `UPDATE tasks SET ${setClause} WHERE id = $1 RETURNING *`,
+      `UPDATE tasks SET ${setClause} WHERE id = $1 AND tenant_id = $${tenantParam} RETURNING *`,
       values
     );
-    
+
     if (result.rows.length === 0) return res.status(404).json({ error: 'Task not found' });
     res.json(result.rows[0]);
   } catch (error) {
@@ -133,7 +139,7 @@ router.patch('/tasks/:id', async (req, res) => {
 router.delete('/tasks/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await query(`DELETE FROM tasks WHERE id = $1`, [id]);
+    await query(`DELETE FROM tasks WHERE id = $1 AND tenant_id = $2`, [id, resolveTenantId(req)]);
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting task:', error);

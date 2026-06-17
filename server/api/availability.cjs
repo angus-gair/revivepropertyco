@@ -1,5 +1,6 @@
 const express = require('express');
 const { query } = require('../lib/database.cjs');
+const { resolveTenantId } = require('../lib/tenant-context.cjs');
 
 const router = express.Router();
 
@@ -45,10 +46,11 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // Get all CONFIRMED appointments for this date
+    // Get all CONFIRMED appointments for this date, scoped to the tenant
+    // (public booking widget has no session -> default Revive tenant).
     const result = await query(
-      `SELECT time_slot FROM appointments WHERE date = $1 AND status = 'CONFIRMED'`,
-      [date]
+      `SELECT time_slot FROM appointments WHERE date = $1 AND status = 'CONFIRMED' AND tenant_id = $2`,
+      [date, resolveTenantId(req)]
     );
 
     const bookedSlots = new Set(result.rows.map(row => row.time_slot));

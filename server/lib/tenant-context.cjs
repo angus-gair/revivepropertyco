@@ -67,10 +67,32 @@ function runInTenantContext(context, fn) {
   return tenantContext.run(context, fn);
 }
 
+/**
+ * Default tenant (Revive Property Co.) used when no platform tenant context is
+ * present — i.e. legacy admin tokens (admin_users) and the public booking form.
+ * Seeded by migration 012 with this deterministic UUID. Override via env if the
+ * default tenant id ever differs.
+ */
+const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID || '00000000-0000-0000-0000-000000000001';
+
+/**
+ * Resolve the effective tenant id for a request.
+ * Platform tenant tokens carry req.user.tenantId (set by auth.cjs's tenant-token
+ * bridge); everything else falls back to the default Revive tenant. This keeps
+ * existing admin/public behaviour intact while isolating platform tenants.
+ * @param {object} req - Express request (may be undefined for background jobs)
+ * @returns {string} Tenant UUID
+ */
+function resolveTenantId(req) {
+  return req?.user?.tenantId || getTenantId() || DEFAULT_TENANT_ID;
+}
+
 module.exports = {
   tenantContext,
   getTenantId,
   getTenantContext,
   tenantMiddleware,
-  runInTenantContext
+  runInTenantContext,
+  resolveTenantId,
+  DEFAULT_TENANT_ID
 };

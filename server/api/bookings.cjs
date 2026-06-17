@@ -4,6 +4,8 @@ const { v4: uuidv4 } = require('uuid');
 const { query, transaction } = require('../lib/database.cjs');
 const { sendConfirmationEmail, sendBusinessNotification } = require('../lib/email.cjs');
 const failedQueue = require('../lib/queue.cjs');
+const { pushBookingToTwenty } = require('../lib/twenty-booking-sync.cjs');
+const { resolveTenantId } = require('../lib/tenant-context.cjs');
 
 // Load queue on startup
 failedQueue.loadFromStorage();
@@ -75,13 +77,16 @@ router.post('/', async (req, res) => {
     const appointmentId = uuidv4();
     const touchpointId = uuidv4();
     const timestamp = Date.now();
+    // Public booking form has no platform session — attribute to the default
+    // (Revive) tenant. resolveTenantId falls back to DEFAULT_TENANT_ID here.
+    const tenantId = resolveTenantId(req);
 
     // Atomic transaction to create lead, appointment, and touchpoint
     const dbWrite = async () => await transaction(async (client) => {
       // Create lead
       await client.query(
-        `INSERT INTO leads (id, first_name, last_name, email, phone, address, service_interest, notes, status, created_at, status_history)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'BOOKED', $9, '[]'::jsonb)`,
+        `INSERT INTO leads (id, first_name, last_name, email, phone, address, service_interest, notes, status, created_at, status_history, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'BOOKED', $9, '[]'::jsonb, $10)`,
         [
           leadId,
           data.firstName.trim(),
@@ -91,14 +96,15 @@ router.post('/', async (req, res) => {
           data.address.trim(),
           data.serviceType,
           data.notes || null,
-          timestamp
+          timestamp,
+          tenantId
         ]
       );
 
       // Create appointment
       await client.query(
-        `INSERT INTO appointments (id, lead_id, service_type, type, date, time_slot, notes, status, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'CONFIRMED', $8)`,
+        `INSERT INTO appointments (id, lead_id, service_type, type, date, time_slot, notes, status, created_at, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'CONFIRMED', $8, $9)`,
         [
           appointmentId,
           leadId,
@@ -107,14 +113,15 @@ router.post('/', async (req, res) => {
           data.date,
           data.timeSlot,
           data.notes || null,
-          timestamp
+          timestamp,
+          tenantId
         ]
       );
 
       // Create touchpoint
       await client.query(
-        `INSERT INTO touchpoints (id, lead_id, type, timestamp, metadata)
-         VALUES ($1, $2, 'BOOKING', $3, $4::jsonb)`,
+        `INSERT INTO touchpoints (id, lead_id, type, timestamp, metadata, tenant_id)
+         VALUES ($1, $2, 'BOOKING', $3, $4::jsonb, $5)`,
         [
           touchpointId,
           leadId,
@@ -126,7 +133,8 @@ router.post('/', async (req, res) => {
             appointmentType: data.type,
             date: data.date,
             timeSlot: data.timeSlot
-          })
+          }),
+          tenantId
         ]
       );
     });
@@ -147,6 +155,23 @@ router.post('/', async (req, res) => {
       // Return immediate success response to user (data is safe in queue)
       console.log('[Booking] Queued for retry - returning success to user');
     }
+
+    // Push to Twenty CRM as Opportunity (non-blocking)
+    pushBookingToTwenty({
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      serviceType: data.serviceType,
+      type: data.type,
+      date: data.date,
+      timeSlot: data.timeSlot,
+      notes: data.notes,
+      bookingReference: bookingId,
+    }).catch(err => {
+      console.error('[Booking] Twenty CRM push failed:', err.message);
+    });
 
     // Send confirmation email to customer (non-blocking)
     sendConfirmationEmail(

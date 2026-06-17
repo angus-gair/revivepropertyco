@@ -28,6 +28,7 @@ const hpBusinessesRouter = require('./api/hp-businesses.cjs');
 const platformRouter = require('./api/platform.cjs');
 const authPlatformRouter = require('./api/auth-platform.cjs');
 const invitationsRouter = require('./api/invitations.cjs');
+const modulesRouter = require('./api/modules.cjs');
 const twentyWebhooksRouter = require('./api/twenty-webhooks.cjs');
 const { subscribeToHipagesUpdates } = require('./lib/hipages-sync.cjs');
 const { subscribeToHpBusinessesUpdates } = require('./lib/hp-businesses-sync.cjs');
@@ -97,6 +98,8 @@ app.use('/api/platform', platformRouter);
 app.use('/api/auth/platform', authPlatformRouter);
 // Team invitations API
 app.use('/api/invitations', invitationsRouter);
+// Platform modules activation API
+app.use('/api/modules', modulesRouter);
 // Twenty CRM webhooks
 app.use('/api/twenty', twentyWebhooksRouter);
 

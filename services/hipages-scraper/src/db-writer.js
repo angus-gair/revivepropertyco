@@ -1,13 +1,5 @@
 require('dotenv').config();
-const { Pool } = require('pg');
-
-// PostgreSQL connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000
-});
+const pool = require('./lib/db.js');
 
 /**
  * Generate a composite hipages_id from lead fields
@@ -141,7 +133,7 @@ async function saveLeads(leads) {
         scraped_at = EXCLUDED.scraped_at,
         raw_data = EXCLUDED.raw_data,
         updated_at = CURRENT_TIMESTAMP
-      RETURNING lead_id
+      RETURNING lead_id, (xmax = 0) AS is_new
     `;
 
     for (const lead of leads) {
@@ -167,18 +159,23 @@ async function saveLeads(leads) {
 
       const result = await client.query(insertStmt, values);
 
-      // Check if this was an insert or update
-      if (result.rows[0]) {
+      if (result.rows[0]?.is_new) {
         saved++;
+      } else if (result.rows[0]) {
+        updated++;
       }
     }
 
     // Emit PostgreSQL NOTIFY for real-time dashboard updates
-    await client.query(`NOTIFY hipages_leads_updated, '{"count": ${saved}}'`);
+    await client.query(`NOTIFY hipages_leads_updated, '{"new": ${saved}, "updated": ${updated}}'`);
 
     await client.query('COMMIT');
 
-    console.log(`[db-writer] Saved ${saved} leads to database`);
+    if (saved > 0 || updated > 0) {
+      console.log(`[db-writer] Delta: ${saved} new, ${updated} updated`);
+    } else {
+      console.log('[db-writer] No changes (all leads already seen)');
+    }
     return { saved, updated };
   } catch (error) {
     await client.query('ROLLBACK');

@@ -31,9 +31,9 @@ npm start
 ## Architecture
 
 ### Routing
-- Uses **HashRouter** (`react-router-dom`) for client-side routing - important for compatibility with nginx reverse proxy
+- Uses **BrowserRouter** (`react-router-dom`) for client-side routing. The static server (nginx in the app container) must provide SPA fallback to `index.html` so deep links / refreshes on client routes resolve.
 - Routes defined in `App.tsx` with `Layout` wrapping all pages
-- `ProtectedRoute` component guards admin pages
+- `ProtectedRoute` guards admin pages; `CustomerProtectedRoute` guards `/customer/*`; `PlatformProtectedRoute` guards `/platform/*`
 
 ### Key Directories
 
@@ -70,7 +70,7 @@ Production deployment uses multi-stage Docker build:
 2. **Production stage**: Nginx Alpine, serves static files with SPA routing support
 - Health check on port 80
 - Traefik labels for HTTPS routing (domain: `revivepropertyco.au`)
-- Automated validation via `final-booking-test.sh` and `test-riv-performance.cjs`.
+- Validation: SEO suite `tests/test-seo-wp*.cjs` (run `for f in tests/test-seo-wp*.cjs; do node $f; done`; wp2 needs a prior `npm run build`), Playwright specs in `tests/*.spec.ts`, and `test-customer-api.sh` (hits live API).
 
 ### TypeScript Configuration
 
@@ -90,11 +90,8 @@ Production deployment uses multi-stage Docker build:
 
 - `public/angus.png`, `public/family.png`: Static images (automatically copied to dist during build)
 
+## HiPages Scraper Configuration
 
-
-
-# hipages Scraper Configuration
-HIPAGES_USERNAME=angus@ajinsights.com.au
-HIPAGES_PASSWORD=jamfinnarc1776!
-HIPAGES_HEADLESS=true
-CRON_SCHEDULE=0 */6 * * *
+Credentials and runtime config live in `.env` (never commit secrets to this file):
+`HIPAGES_USERNAME`, `HIPAGES_PASSWORD`, `HIPAGES_HEADLESS` (must be `true` — container has no X server),
+`CRON_SCHEDULE` (default `0 */6 * * *`). See `services/hipages-scraper/` for the scraper itself.

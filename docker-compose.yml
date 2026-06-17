@@ -1,3 +1,4 @@
+# Revive Property Co - V-Rogue Deployment
 services:
   app:
     build:
@@ -5,48 +6,24 @@ services:
       dockerfile: Dockerfile
     container_name: revivepropertyco
     restart: unless-stopped
-    environment:
-      - API_URL=https://api.z.ai/api/coding/paas/v4
-      - API_KEY=70f80ec6e2904f14bc93e6bc40f48338.9OZMUYo3ET2EYxRn
-      - VITE_ADMIN_USERNAME=admin
-      - VITE_ADMIN_PASSWORD=revive-admin-2026
-
+    env_file: .env
     networks:
-      - homelab_web
       - traefik-public
-
+      - internal
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-public"
-
-      # HTTP apex -> HTTPS apex redirect
-      - "traefik.http.routers.revivepropertyco-http.rule=Host(`revivepropertyco.au`)"
-      - "traefik.http.routers.revivepropertyco-http.entrypoints=web"
-      - "traefik.http.routers.revivepropertyco-http.middlewares=redirect-to-https"
-
-      # HTTP www -> HTTPS apex redirect
-      - "traefik.http.routers.revivepropertyco-www-http.rule=Host(`www.revivepropertyco.au`)"
-      - "traefik.http.routers.revivepropertyco-www-http.entrypoints=web"
-      - "traefik.http.routers.revivepropertyco-www-http.middlewares=redirect-to-https"
-
-      # HTTPS www -> HTTPS apex redirect
       - "traefik.http.routers.revivepropertyco-www.rule=Host(`www.revivepropertyco.au`)"
       - "traefik.http.routers.revivepropertyco-www.entrypoints=websecure"
-      - "traefik.http.routers.revivepropertyco-www.tls.certresolver=cloudflare"
+      - "traefik.http.routers.revivepropertyco-www.tls.certresolver=letsencrypt"
       - "traefik.http.routers.revivepropertyco-www.middlewares=www-to-apex"
-
-      # HTTPS apex router
       - "traefik.http.routers.revivepropertyco.rule=Host(`revivepropertyco.au`)"
       - "traefik.http.routers.revivepropertyco.entrypoints=websecure"
-      - "traefik.http.routers.revivepropertyco.tls.certresolver=cloudflare"
+      - "traefik.http.routers.revivepropertyco.tls.certresolver=letsencrypt"
       - "traefik.http.routers.revivepropertyco.priority=50"
-
-      # www -> apex redirect middleware
       - "traefik.http.middlewares.www-to-apex.redirectregex.regex=^https://www\\.revivepropertyco\\.au/(.*)"
       - "traefik.http.middlewares.www-to-apex.redirectregex.replacement=https://revivepropertyco.au/$${1}"
       - "traefik.http.middlewares.www-to-apex.redirectregex.permanent=true"
-
-      # Service
       - "traefik.http.services.revivepropertyco.loadbalancer.server.port=80"
 
   backend:
@@ -55,45 +32,26 @@ services:
       dockerfile: Dockerfile.backend
     container_name: revivepropertyco-backend
     restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - PORT=8080
-      - DATABASE_URL=postgresql://homelab:BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg@postgres:5432/revivepropertyco
-      - HP_BUSINESSES_DB_URL=postgresql://homelab:BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg@postgres:5432/hipages_directory
-      - JWT_SECRET=revive-property-jwt-secret-2026-production-secure
-      - RESEND_API_KEY=re_HhXXXXXX
-      - RESEND_FROM=Revive Property Co. <info@revivepropertyco.au>
-
+    env_file: .env
     networks:
-      - homelab_web
       - traefik-public
-      - homelab_internal
-
+      - internal
     volumes:
       - customer-uploads:/app/uploads/customers
-
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-public"
-
-      # HTTPS API router
       - "traefik.http.routers.revivepropertyco-api.rule=Host(`revivepropertyco.au`) && PathPrefix(`/api`)"
       - "traefik.http.routers.revivepropertyco-api.entrypoints=websecure"
-      - "traefik.http.routers.revivepropertyco-api.tls.certresolver=cloudflare"
+      - "traefik.http.routers.revivepropertyco-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.revivepropertyco-api.priority=100"
-
-      # HTTPS Socket.IO router (WebSocket support)
       - "traefik.http.routers.revivepropertyco-socketio.rule=Host(`revivepropertyco.au`) && PathPrefix(`/socket.io`)"
       - "traefik.http.routers.revivepropertyco-socketio.entrypoints=websecure"
-      - "traefik.http.routers.revivepropertyco-socketio.tls.certresolver=cloudflare"
+      - "traefik.http.routers.revivepropertyco-socketio.tls.certresolver=letsencrypt"
       - "traefik.http.routers.revivepropertyco-socketio.middlewares=websocket-headers"
       - "traefik.http.routers.revivepropertyco-socketio.priority=100"
-
-      # WebSocket headers middleware
       - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Upgrade=websocket"
       - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Connection=Upgrade"
-
-      # Service
       - "traefik.http.services.revivepropertyco-api.loadbalancer.server.port=8080"
 
   hipages-scraper:
@@ -102,27 +60,16 @@ services:
       dockerfile: Dockerfile
     container_name: revive-hipages-scraper
     restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - HIPAGES_USERNAME=${HIPAGES_USERNAME}
-      - HIPAGES_PASSWORD=${HIPAGES_PASSWORD}
-      - HIPAGES_HEADLESS=true
-      - CRON_SCHEDULE=0 */6 * * *
+    env_file: .env
     networks:
-      - homelab_internal
+      - internal
     volumes:
       - hipages-output:/app/output
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
-    healthcheck:
-      test: ["CMD", "node", "-e", "new (require('pg').Client)(process.env.DATABASE_URL).connect().then(() => process.exit(0)).catch(() => process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   hp-business-scraper:
     build:
@@ -130,41 +77,31 @@ services:
       dockerfile: Dockerfile
     container_name: revive-hp-business-scraper
     restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - HP_BUSINESSES_DB_URL=postgresql://homelab:BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg@postgres:5432/hipages_directory
-      - HIPAGES_HEADLESS=true
-      - CRON_SCHEDULE=0 */6 * * *
-      - MAX_PAGES_PER_TRADE=5
-      - SCRAPE_LOCATION=sydney-nsw
+    env_file: .env
     networks:
-      - homelab_internal
+      - internal
     volumes:
       - hp-business-output:/app/output
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
-    healthcheck:
-      test: ["CMD", "node", "-e", "new (require('pg').Client)(process.env.HP_BUSINESSES_DB_URL).connect().then(() => process.exit(0)).catch(() => process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
-  # Twenty CRM Services
   twenty-db:
     image: postgres:15-alpine
     container_name: twenty-postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=twenty
-      - POSTGRES_PASSWORD=${TWENTY_DB_PASSWORD}
-      - POSTGRES_DB=twenty_crms
+      POSTGRES_USER: twenty
+      POSTGRES_PASSWORD_FILE: /run/secrets/twenty_db_pass
+      POSTGRES_DB: twenty_crms
+    secrets:
+      - twenty_db_pass
     volumes:
       - twenty-data:/var/lib/postgresql/data
     networks:
-      - homelab_internal
+      - internal
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "twenty"]
       interval: 10s
@@ -178,7 +115,7 @@ services:
     volumes:
       - twenty-redis:/data
     networks:
-      - homelab_internal
+      - internal
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -189,56 +126,26 @@ services:
     image: twentycrm/twenty:v1.22.6
     container_name: twenty-server
     restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://twenty:${TWENTY_DB_PASSWORD}@twenty-db:5432/twenty_crms
-      - REDIS_URL=redis://twenty-redis:6379
-      - SERVER_URL=${TWENTY_SERVER_URL}
-      - FRONT_BASE_URL=${TWENTY_SERVER_URL}
-      - APP_SECRET=${TWENTY_APP_SECRET}
-      - PGHOST=twenty-db
-      - PGPORT=5432
-      - PGDATABASE=twenty_crms
-      - PGUSER=twenty
-      - PGPASSWORD=${TWENTY_DB_PASSWORD}
-    depends_on:
-      twenty-db:
-        condition: service_healthy
-      twenty-redis:
-        condition: service_healthy
-    networks:
-      - homelab_internal
-      - traefik-public
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-public"
-      - "traefik.http.routers.twenty-crm.rule=Host(`crm.revivepropertyco.au`)"
-      - "traefik.http.routers.twenty-crm.entrypoints=websecure"
-      - "traefik.http.routers.twenty-crm.tls.certresolver=cloudflare"
-      - "traefik.http.services.twenty-crm.loadbalancer.server.port=3000"
-
-  twenty-worker:
-    image: twentycrm/twenty:v1.22.6
-    container_name: twenty-worker
-    restart: unless-stopped
-    command: ["node", "dist/src/queue-worker/queue-worker"]
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://twenty:${TWENTY_DB_PASSWORD}@twenty-db:5432/twenty_crms
-      - REDIS_URL=redis://twenty-redis:6379
-      - SERVER_URL=${TWENTY_SERVER_URL}
-      - APP_SECRET=${TWENTY_APP_SECRET}
-      - PGHOST=twenty-db
-      - PGPORT=5432
-      - PGDATABASE=twenty_crms
-      - PGUSER=twenty
-      - PGPASSWORD=${TWENTY_DB_PASSWORD}
+    env_file: .env.twenty
     depends_on:
       - twenty-db
       - twenty-redis
-      - twenty-server
+    secrets:
+      - twenty_db_pass
     networks:
-      - homelab_internal
+      - traefik-public
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.twenty.rule=Host(`crm.revivepropertyco.au`)"
+      - "traefik.http.routers.twenty.entrypoints=websecure"
+      - "traefik.http.routers.twenty.tls.certresolver=letsencrypt"
+      - "traefik.http.services.twenty.loadbalancer.server.port=3000"
+
+secrets:
+  twenty_db_pass:
+    file: ./secrets/twenty_db_password
 
 volumes:
   customer-uploads:
@@ -248,9 +155,7 @@ volumes:
   twenty-redis:
 
 networks:
-  homelab_web:
-    external: true
   traefik-public:
     external: true
-  homelab_internal:
+  internal:
     external: true

@@ -36,8 +36,34 @@ function authenticateToken(req, res, next) {
     });
   }
 
-  const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-  const decoded = verifyToken(token);
+  const token = authHeader.substring(7).trim(); // Remove 'Bearer ' prefix and trim
+  if (!token || token === 'null' || token === 'undefined') {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized. Token required.'
+    });
+  }
+
+  // Try admin token verification first
+  let decoded = verifyToken(token);
+
+  // If not valid admin token, try tenant platform token verification
+  if (!decoded) {
+    try {
+      const { verifyTenantToken } = require('./auth-platform.cjs');
+      const decodedTenant = verifyTenantToken(token);
+      if (decodedTenant) {
+        decoded = {
+          userId: decodedTenant.userId,
+          tenantId: decodedTenant.tenantId,
+          tenantSlug: decodedTenant.tenantSlug,
+          role: decodedTenant.role
+        };
+      }
+    } catch (error) {
+      console.error('[auth] Error during tenant token verification:', error);
+    }
+  }
 
   if (!decoded) {
     return res.status(401).json({

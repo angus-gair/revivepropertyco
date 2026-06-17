@@ -170,6 +170,12 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
 
   // Handle accept action
   const handleAccept = async (lead: HipagesLead) => {
+    const token = localStorage.getItem('revive_admin_token') || localStorage.getItem('revive_platform_token');
+    if (!token) {
+      alert('Authentication required. Please log in first.');
+      return;
+    }
+
     if (!confirm(`Accept lead from ${lead.customer_name || 'Unknown'} (${lead.suburb})?`)) {
       return;
     }
@@ -180,7 +186,7 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('revive_admin_token') || ''}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({})
       });
@@ -219,6 +225,12 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
 
   // Handle promote action
   const handlePromote = async (lead: HipagesLead) => {
+    const token = localStorage.getItem('revive_admin_token') || localStorage.getItem('revive_platform_token');
+    if (!token) {
+      alert('Authentication required. Please log in first.');
+      return;
+    }
+
     if (!confirm(`Promote lead from ${lead.customer_name || 'Unknown'} to Twenty CRM Opportunity?`)) {
       return;
     }
@@ -229,7 +241,7 @@ const HipagesLeadsNoAuthPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('revive_admin_token') || ''}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({})
       });

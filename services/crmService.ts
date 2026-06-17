@@ -6,7 +6,7 @@ const API_BASE = import.meta.env.PROD
   : 'http://localhost:3001';
 
 const getAuthHeader = () => {
-  const token = localStorage.getItem('revive_admin_token');
+  const token = localStorage.getItem('revive_admin_token') || localStorage.getItem('revive_platform_token');
   return token ? { 'Authorization': `Bearer ${token}` } : {};
 };
 

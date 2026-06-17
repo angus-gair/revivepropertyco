@@ -92,7 +92,7 @@ async function main() {
 
   // --- 5. index.html has canonical ---
   console.log('\nindex.html canonical & OG');
-  const indexHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   check('index.html has canonical link', indexHtml.includes('rel="canonical"'));
   check('index.html has og:url', indexHtml.includes('og:url'));
   check('index.html has og:image', indexHtml.includes('og:image'));
@@ -103,7 +103,7 @@ async function main() {
 
   // --- 6. BrowserRouter (not HashRouter) ---
   console.log('\nRouting');
-  const appTsx = fs.readFileSync(path.join(__dirname, 'App.tsx'), 'utf8');
+  const appTsx = fs.readFileSync(path.join(__dirname, '..', 'App.tsx'), 'utf8');
   check('App.tsx uses BrowserRouter (not HashRouter)', appTsx.includes('BrowserRouter') && !appTsx.includes('HashRouter'));
 
   // Summary

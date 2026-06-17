@@ -1,7 +1,14 @@
 # Revive Property Co. - Production Readiness Completion Plan
 
+> ⚠️ **SUPERSEDED / HISTORICAL (as of 2026-06-17).** This 2026-03-12 plan described an
+> early state (mock emails, no backend, localStorage-only). Every CRITICAL/HIGH item below
+> has since shipped: PostgreSQL backend, Resend email, bookings/availability/auth APIs,
+> touchpoints, quotes, queue, and admin notifications are all live. The project has since
+> grown well beyond this plan (customer portal, multi-tenant platform, HiPages scraper +
+> AI auto-bid, Twenty CRM sync). Kept for historical context only — do not action.
+>
 > **Status Audit Date**: 2026-03-12
-> **Current Completion**: ~75%
+> **Current Completion**: ~75% (at time of writing — now effectively complete for this scope)
 > **Estimated Time to Production**: 3-5 days
 > **Database**: Local PostgreSQL (homelab instance)
 > **Email**: Resend (to be configured)
@@ -49,7 +56,7 @@ The homelab already has a PostgreSQL instance running:
 | **Host** | `postgres` (internal Docker network) |
 | **Port** | 5432 |
 | **Username** | `homelab` |
-| **Password** | `BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg` |
+| **Password** | `<redacted — see DATABASE_URL in .env>` |
 | **Volume** | `homelab_postgres_data` |
 | **Source** | `/var/lib/docker/volumes/homelab_postgres_data/_data` |
 
@@ -665,7 +672,7 @@ pages/AdminDashboard.tsx - Add touchpoint and quote views
 
 ```bash
 # Database (Homelab PostgreSQL)
-DATABASE_URL=postgresql://homelab:BQvsf9MNbLHM0r972mJmpjYphvtUxWyhFwh4xP8v8hg@postgres:5432/revivepropertyco
+DATABASE_URL=postgresql://homelab:<redacted — see DATABASE_URL in .env>@postgres:5432/revivepropertyco
 
 # Email (Resend)
 RESEND_API_KEY=re_xxxxxx

@@ -6,6 +6,7 @@
 const express = require('express');
 const { query } = require('../lib/database.cjs');
 const { resolveTenantId } = require('../lib/tenant-context.cjs');
+const { pushCustomerToTwenty } = require('../lib/twenty-portal-sync.cjs');
 const {
   generateToken,
   verifyToken,
@@ -115,6 +116,11 @@ router.post('/register', async (req, res) => {
        VALUES ($1, 'REGISTER', $2)`,
       [customer.customer_id, JSON.stringify({ method: 'web' })]
     );
+
+    // Sync new customer to Twenty CRM as a Person (non-blocking).
+    pushCustomerToTwenty({
+      firstName, lastName, email, mobile, address, suburb, postcode, state
+    }).catch(err => console.error('[customer] Twenty CRM registration sync failed:', err.message));
 
     res.status(201).json({
       success: true,

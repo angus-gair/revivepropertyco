@@ -6,8 +6,46 @@
 const express = require('express');
 const { query } = require('../lib/database.cjs');
 const { authenticateToken } = require('../lib/auth.cjs');
+const { syncQuoteDecisionToTwenty } = require('../lib/twenty-portal-sync.cjs');
 
 const router = express.Router();
+
+/**
+ * Look up contact details for a quote and push the customer's decision to Twenty CRM.
+ * Non-blocking — errors are logged and never affect the portal response.
+ */
+async function pushQuoteDecision(quoteId, decision, reason) {
+  try {
+    const info = await query(
+      `SELECT q.amount,
+              COALESCE(l.email, c.email)           AS email,
+              COALESCE(l.first_name, c.first_name) AS first_name,
+              COALESCE(l.last_name, c.last_name)   AS last_name,
+              l.service_interest                   AS service_type,
+              COALESCE(l.address, c.address)       AS address
+       FROM quotes q
+       LEFT JOIN leads l ON q.lead_id = l.id
+       LEFT JOIN customers c ON q.customer_id = c.customer_id
+       WHERE q.id = $1`,
+      [quoteId]
+    );
+    if (info.rows.length === 0) return;
+    const r = info.rows[0];
+    syncQuoteDecisionToTwenty({
+      decision,
+      quoteId,
+      amount: r.amount != null ? parseFloat(r.amount) : null,
+      reason: reason || null,
+      firstName: r.first_name,
+      lastName: r.last_name,
+      email: r.email,
+      serviceType: r.service_type,
+      address: r.address,
+    }).catch(err => console.error(`[customer-quotes] Twenty sync (${decision}) failed:`, err.message));
+  } catch (err) {
+    console.error(`[customer-quotes] Twenty sync prep (${decision}) failed:`, err.message);
+  }
+}
 
 /**
  * GET /api/customer/quotes
@@ -250,8 +288,8 @@ router.post('/quotes/:id/approve', authenticateToken, async (req, res) => {
       [customerId, JSON.stringify({ quoteId, reason })]
     );
 
-    // TODO: Send email notification to admin
-    // This is optional for MVP - can be added later
+    // Sync the approval to Twenty CRM (non-blocking): moves the Opportunity to CUSTOMER (won).
+    pushQuoteDecision(quoteId, 'approve', reason);
 
     res.json({
       success: true,
@@ -340,8 +378,8 @@ router.post('/quotes/:id/reject', authenticateToken, async (req, res) => {
       [customerId, JSON.stringify({ quoteId, reason })]
     );
 
-    // TODO: Send email notification to admin
-    // This is optional for MVP - can be added later
+    // Sync the rejection to Twenty CRM (non-blocking): logs a Note on the Opportunity/Person.
+    pushQuoteDecision(quoteId, 'reject', reason);
 
     res.json({
       success: true,

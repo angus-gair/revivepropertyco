@@ -43,11 +43,11 @@ function main() {
   // --- Task 8.1: NAP Standard Documented ---
   console.log('\nTask 8.1: NAP Standard Documentation');
 
-  const napDoc = fs.existsSync(path.join(__dirname, 'NAP_STANDARD.md'));
+  const napDoc = fs.existsSync(path.join(__dirname, '..', 'docs', 'NAP_STANDARD.md'));
   check('NAP_STANDARD.md exists', napDoc);
 
   if (napDoc) {
-    const napContent = fs.readFileSync(path.join(__dirname, 'NAP_STANDARD.md'), 'utf8');
+    const napContent = fs.readFileSync(path.join(__dirname, '..', 'docs', 'NAP_STANDARD.md'), 'utf8');
     check('NAP doc contains business name', napContent.includes(NAP.name));
     check('NAP doc contains address', napContent.includes(NAP.address));
     check('NAP doc contains phone', napContent.includes(NAP.phone));
@@ -60,7 +60,7 @@ function main() {
   // --- Task 8.2: NAP Consistency in index.html ---
   console.log('\nTask 8.2: NAP in index.html');
 
-  const indexHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   check('index.html contains business name in structured data', indexHtml.includes(NAP.name));
   check('index.html contains address in structured data', indexHtml.includes('Marcus Clarke Street'));
   // Phone may be in E.164 format (+61...) or local format (02...)
@@ -93,7 +93,7 @@ function main() {
   // --- Task 8.6: Contact Page ---
   console.log('\nTask 8.6: Contact Page');
 
-  const contactPage = fs.readFileSync(path.join(__dirname, 'pages/ContactPage.tsx'), 'utf8');
+  const contactPage = fs.readFileSync(path.join(__dirname, '..', 'pages/ContactPage.tsx'), 'utf8');
   check('Contact page has phone number', contactPage.includes('02 8201 3710'));
   check('Contact page has email', contactPage.includes('angus@gair.com.au'));
   check('Contact page has address', contactPage.includes('Marcus Clarke Street'));
@@ -101,7 +101,7 @@ function main() {
   // --- Task 8.7: Landing Page Business Info ---
   console.log('\nTask 8.7: Landing Page Business Info');
 
-  const landingPage = fs.readFileSync(path.join(__dirname, 'pages/LandingPage.tsx'), 'utf8');
+  const landingPage = fs.readFileSync(path.join(__dirname, '..', 'pages/LandingPage.tsx'), 'utf8');
   check('Landing page mentions Canberra', landingPage.includes('Canberra'));
   check('Landing page lists service areas', landingPage.includes('Braddon') && landingPage.includes('Kingston'));
 
@@ -109,7 +109,7 @@ function main() {
   console.log('\nTask 8.8: External Directory Checklist');
 
   if (napDoc) {
-    const napContent = fs.readFileSync(path.join(__dirname, 'NAP_STANDARD.md'), 'utf8');
+    const napContent = fs.readFileSync(path.join(__dirname, '..', 'docs', 'NAP_STANDARD.md'), 'utf8');
     check('Directory checklist includes Google Business Profile', napContent.includes('Google Business Profile'));
     check('Directory checklist includes Apple Business Connect', napContent.includes('Apple Business Connect'));
     check('Directory checklist includes Bing Places', napContent.includes('Bing Places'));

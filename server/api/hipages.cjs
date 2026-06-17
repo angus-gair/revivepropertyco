@@ -146,6 +146,406 @@ router.get('/noauth/leads', async (req, res) => {
   }
 });
 
+/**
+ * --- OpenRouter AI demo (no auth — public test endpoints) --------------------
+ * GET  /api/hipages/ai/demo  → self-contained HTML chat UI
+ * POST /api/hipages/ai/chat  → OpenRouter proxy { message } → { content, model }
+ */
+router.get('/ai/demo', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.end(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Revive AI — OpenRouter Demo</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0d1117;color:#c9d1d9;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem}
+  h1{color:#58a6ff;font-size:1.4rem;font-weight:600;letter-spacing:.05em;margin-bottom:.25rem}
+  .subtitle{color:#6e7681;font-size:.8rem;margin-bottom:1.5rem}
+  .card{background:#161b22;border:1px solid #30363d;border-radius:8px;width:100%;max-width:700px;padding:1.25rem;display:flex;flex-direction:column;gap:1rem}
+  #response{background:#0d1117;border:1px solid #21262d;border-radius:6px;min-height:120px;padding:.75rem 1rem;font-size:.9rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:#e6edf3}
+  .model-tag{color:#3fb950;font-size:.75rem;font-family:monospace}
+  textarea{background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;font-size:.9rem;padding:.75rem 1rem;resize:vertical;width:100%;min-height:80px;outline:none;transition:border-color .15s}
+  textarea:focus{border-color:#58a6ff}
+  .row{display:flex;gap:.75rem;align-items:center}
+  button{background:#238636;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:.875rem;font-weight:600;padding:.5rem 1.25rem;transition:background .15s}
+  button:hover{background:#2ea043}
+  button:disabled{background:#21262d;color:#6e7681;cursor:not-allowed}
+  .spinner{display:none;color:#58a6ff;font-size:.8rem}
+  .error{color:#f85149}
+  .usage{color:#6e7681;font-size:.75rem;font-family:monospace}
+</style>
+</head>
+<body>
+<h1>Revive AI — OpenRouter Demo</h1>
+<p class="subtitle">Model: <span class="model-tag">openrouter/free</span> &nbsp;·&nbsp; Swap to any model in <code style="color:#58a6ff">.env OPENROUTER_MODEL</code></p>
+<div class="card">
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+      <span style="font-size:.8rem;color:#6e7681">Response</span>
+      <span class="model-tag" id="modelLabel"></span>
+    </div>
+    <div id="response" style="color:#6e7681;font-style:italic">Response will appear here…</div>
+    <div class="usage" id="usage" style="margin-top:.4rem"></div>
+  </div>
+  <div>
+    <textarea id="msg" placeholder="Ask anything… e.g. 'Write a quote intro for a pressure washing job in Canberra'" rows="3"></textarea>
+    <div class="row" style="margin-top:.5rem">
+      <button id="btn" onclick="send()">Send</button>
+      <span class="spinner" id="spin">thinking…</span>
+    </div>
+  </div>
+</div>
+<script>
+async function send(){
+  const msg=document.getElementById('msg').value.trim();
+  if(!msg)return;
+  const btn=document.getElementById('btn'),spin=document.getElementById('spin'),resp=document.getElementById('response'),mdl=document.getElementById('modelLabel'),usg=document.getElementById('usage');
+  btn.disabled=true;spin.style.display='inline';resp.className='';resp.textContent='';mdl.textContent='';usg.textContent='';
+  try{
+    const r=await fetch('/api/hipages/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+    const d=await r.json();
+    if(!d.success)throw new Error(d.error||'Unknown error');
+    resp.textContent=d.content;
+    mdl.textContent=d.model;
+    if(d.usage)usg.textContent='tokens: prompt='+d.usage.prompt_tokens+' completion='+d.usage.completion_tokens;
+  }catch(e){resp.className='error';resp.textContent='Error: '+e.message;}
+  finally{btn.disabled=false;spin.style.display='none';}
+}
+document.getElementById('msg').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')send();});
+</script>
+</body>
+</html>`);
+});
+
+router.post('/ai/chat', async (req, res) => {
+  try {
+    const { message, system } = req.body || {};
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ success: false, error: 'message is required' });
+    }
+    const { callOpenRouter } = require('../lib/openrouter.cjs');
+    const messages = [{ role: 'user', content: message.trim() }];
+    const result = await callOpenRouter(messages, system ? { systemPrompt: system } : {});
+    res.json({ success: true, content: result.content, model: result.model, usage: result.usage });
+  } catch (error) {
+    console.error('[hipages] OpenRouter chat error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * --- HiPages auto-bid (Riv autonomous bidding) -------------------------------
+ * These two routes are defined BEFORE router.use(authenticateToken) so the external
+ * n8n workflow can reach them with a shared X-Action-Secret header (no admin JWT).
+ * This is the only decision-layer surface: all HiPages/Twenty writes and the financial
+ * guardrails live here, server-side, so an n8n bug can't bypass them.
+ */
+function checkActionSecret(req, res) {
+  const secret = process.env.ACTION_SECRET;
+  if (secret && req.headers['x-action-secret'] !== secret) {
+    res.status(401).json({ success: false, error: 'Unauthorized' });
+    return false;
+  }
+  return true;
+}
+
+function boolEnv(name, def) {
+  const v = process.env[name];
+  if (v === undefined) return def;
+  return String(v).toLowerCase() === 'true';
+}
+
+async function recordDecision(opportunityId, { status, service_line = null, confidence = null, reason = null }) {
+  await query(
+    `UPDATE hipages_leads
+        SET auto_bid_status = $1, auto_bid_service_line = $2, auto_bid_confidence = $3,
+            auto_bid_reason = $4, auto_bid_at = NOW(), updated_at = NOW()
+      WHERE crm_opportunity_id = $5`,
+    [status, service_line, confidence, reason, opportunityId]
+  );
+}
+
+// Best-effort: record the AI rationale as a Twenty Note on the Opportunity, and
+// optionally advance its pipeline stage. Never throws — the auto_bid_* columns are
+// the authoritative ledger; Twenty writes are for human visibility only.
+async function applyTwentyAudit(opportunityId, { status, decision, service_line, confidence, reason }) {
+  const apiToken = process.env.TWENTY_API_TOKEN;
+  const serverUrl = process.env.TWENTY_SERVER_URL || 'http://twenty:3000';
+  if (!apiToken || apiToken === 'generate-after-twenty-setup') return;
+  try {
+    const { TwentyClient } = require('../lib/twenty-client.cjs');
+    const tc = new TwentyClient(apiToken, serverUrl);
+    const body = `### Riv auto-bid decision: ${status}
+- **Decision:** ${decision}
+- **Service line:** ${service_line || 'n/a'}
+- **Confidence:** ${confidence != null ? confidence : 'n/a'}
+- **Reason:** ${reason || 'n/a'}
+- **At:** ${new Date().toISOString()}`;
+    await tc.createNote({ body, noteTargets: { create: [{ opportunityId }] } });
+
+    const stage = status === 'ACCEPTED'
+      ? process.env.AUTOBID_ACCEPT_STAGE
+      : (decision === 'skip' ? process.env.AUTOBID_SKIP_STAGE : null);
+    if (stage) {
+      const m = `mutation U($id: UUID!, $data: OpportunityUpdateInput!) { updateOneOpportunity(id: $id, data: $data) { id stage } }`;
+      await tc.graphql(m, { id: opportunityId, data: { stage } });
+    }
+  } catch (err) {
+    console.warn('[hipages] auto-bid Twenty audit (non-fatal):', err.message);
+  }
+}
+
+/**
+ * GET /api/hipages/auto-bid/candidates  (X-Action-Secret)
+ * Synced, still-open, not-yet-evaluated leads for the n8n classifier.
+ */
+router.get('/auto-bid/candidates', async (req, res) => {
+  if (!checkActionSecret(req, res)) return;
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
+    const result = await query(
+      `SELECT lead_id, crm_opportunity_id, customer_name, job_type, job_subtype,
+              description, suburb, postcode, credits, contact_status, posted_date, status
+         FROM hipages_leads
+        WHERE synced_to_crm = TRUE
+          AND crm_opportunity_id IS NOT NULL
+          AND status IN ('AVAILABLE', 'FIRST_TO_ACCEPT')
+          AND auto_bid_status IS NULL
+        ORDER BY posted_date DESC NULLS LAST, scraped_at DESC
+        LIMIT $1`,
+      [limit]
+    );
+    res.json({ success: true, count: result.rows.length, data: result.rows });
+  } catch (error) {
+    console.error('[hipages] auto-bid candidates error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/hipages/auto-bid/summary  (X-Action-Secret)
+ * Monitoring view: how the AI has triaged leads, and the manual-decline queue.
+ *  - pending           : not yet analyzed (delta — will be processed next runs)
+ *  - accepted          : AI placed a real bid (live mode)
+ *  - would_accept      : AI matched, held by dry-run (becomes a real bid when live)
+ *  - skipped_nonmatch  : AI judged NOT a target service → YOUR manual-decline queue
+ *  - failed            : accept attempted but lead expired / button gone
+ */
+router.get('/auto-bid/summary', async (req, res) => {
+  if (!checkActionSecret(req, res)) return;
+  try {
+    const c = await query(`
+      SELECT
+        COUNT(*) FILTER (WHERE auto_bid_status IS NULL AND status IN ('AVAILABLE','FIRST_TO_ACCEPT') AND synced_to_crm = TRUE)::int AS pending,
+        COUNT(*) FILTER (WHERE auto_bid_status = 'ACCEPTED')::int AS accepted,
+        COUNT(*) FILTER (WHERE auto_bid_status = 'SKIPPED' AND auto_bid_reason LIKE 'dry-run%')::int AS would_accept,
+        COUNT(*) FILTER (WHERE auto_bid_status = 'SKIPPED' AND (auto_bid_reason IS NULL OR auto_bid_reason NOT LIKE 'dry-run%'))::int AS skipped_nonmatch,
+        COUNT(*) FILTER (WHERE auto_bid_status = 'FAILED')::int AS failed,
+        MAX(auto_bid_at) AS last_decision_at
+      FROM hipages_leads`);
+    res.json({ success: true, dry_run: boolEnv('AUTOBID_DRY_RUN', true), enabled: boolEnv('AUTOBID_ENABLED', false), ...c.rows[0] });
+  } catch (error) {
+    console.error('[hipages] auto-bid summary error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/hipages/auto-bid/run/start  (X-Action-Secret)
+ * n8n calls this at the start of a run. Emails "pipeline commenced" when count>0.
+ * Returns started_at (ISO), used as the window-start for the completion summary.
+ */
+router.post('/auto-bid/run/start', async (req, res) => {
+  if (!checkActionSecret(req, res)) return;
+  const startedAt = new Date().toISOString();
+  const count = parseInt((req.body && req.body.count) || 0, 10) || 0;
+  const mode = boolEnv('AUTOBID_DRY_RUN', true) ? 'DRY-RUN' : 'LIVE';
+  if (count > 0) {
+    const { sendAutobidStart } = require('../lib/autobid-email.cjs');
+    sendAutobidStart({ count, mode, startedAt }).catch(e => console.warn('[hipages] start email:', e.message));
+  }
+  res.json({ success: true, started_at: startedAt, count, mode });
+});
+
+/**
+ * POST /api/hipages/auto-bid/run/complete  (X-Action-Secret)
+ * n8n calls this at the end of a run with the started_at from run/start. Buckets all
+ * decisions recorded in the window and emails the outcome: auto bids, edge cases
+ * (almost bid — guardrail-blocked), and not-bid (non-matches / manual-decline queue).
+ */
+router.post('/auto-bid/run/complete', async (req, res) => {
+  if (!checkActionSecret(req, res)) return;
+  const startedAt = req.body && req.body.started_at;
+  if (!startedAt) return res.status(400).json({ success: false, error: 'started_at required' });
+  try {
+    const { rows } = await query(
+      `SELECT job_type, suburb, auto_bid_status, auto_bid_service_line AS service_line,
+              auto_bid_confidence AS confidence, credits, auto_bid_reason AS reason
+         FROM hipages_leads
+        WHERE auto_bid_at >= $1
+        ORDER BY auto_bid_at ASC`,
+      [startedAt]
+    );
+    const isEdge = r => /^(low_confidence|over_ceiling|daily_cap)/.test(r.reason || '');
+    const isDry  = r => /^dry-run/.test(r.reason || '');
+    const accepted    = rows.filter(r => r.auto_bid_status === 'ACCEPTED');
+    const wouldAccept = rows.filter(r => r.auto_bid_status === 'SKIPPED' && isDry(r));
+    const edge        = rows.filter(r => r.auto_bid_status === 'SKIPPED' && isEdge(r));
+    const failed      = rows.filter(r => r.auto_bid_status === 'FAILED');
+    const notBidAll   = rows.filter(r => r.auto_bid_status === 'SKIPPED' && !isDry(r) && !isEdge(r));
+    const buckets = { accepted, wouldAccept, edge, failed, notBid: { count: notBidAll.length, samples: notBidAll.slice(0, 10) } };
+    const mode = boolEnv('AUTOBID_DRY_RUN', true) ? 'DRY-RUN' : 'LIVE';
+    const total = accepted.length + wouldAccept.length + edge.length + failed.length + notBidAll.length;
+    if (total > 0) {
+      const { sendAutobidComplete } = require('../lib/autobid-email.cjs');
+      sendAutobidComplete({ mode, startedAt, finishedAt: new Date().toISOString(), buckets })
+        .catch(e => console.warn('[hipages] complete email:', e.message));
+    }
+    res.json({ success: true, mode, processed: total, accepted: accepted.length,
+      would_accept: wouldAccept.length, edge: edge.length, not_bid: notBidAll.length, failed: failed.length });
+  } catch (error) {
+    console.error('[hipages] auto-bid run/complete error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/hipages/auto-bid/decision  (X-Action-Secret)
+ * Body: { opportunityId, decision: "accept"|"skip", service_line?, confidence?, reason? }
+ * Guardrails: AUTOBID_ENABLED, AUTOBID_DRY_RUN, AUTOBID_MIN_CONFIDENCE,
+ * AUTOBID_MAX_CREDITS, AUTOBID_DAILY_CAP. "accept" -> scraper /action (Playwright).
+ */
+router.post('/auto-bid/decision', async (req, res) => {
+  if (!checkActionSecret(req, res)) return;
+  const { opportunityId, decision, service_line = null, confidence = null, reason = null } = req.body || {};
+  if (!opportunityId || !['accept', 'skip'].includes(decision)) {
+    return res.status(400).json({ success: false, error: 'Required: opportunityId, decision ("accept"|"skip")' });
+  }
+  try {
+    const { rows } = await query('SELECT * FROM hipages_leads WHERE crm_opportunity_id = $1 LIMIT 1', [opportunityId]);
+    if (!rows.length) return res.status(404).json({ success: false, error: `No lead for opportunity ${opportunityId}` });
+    const lead = rows[0];
+
+    // Idempotent: never act twice on the same lead
+    if (lead.auto_bid_status) {
+      return res.json({ success: true, skipped: 'already_evaluated', auto_bid_status: lead.auto_bid_status });
+    }
+
+    if (!boolEnv('AUTOBID_ENABLED', false)) {
+      return res.json({ success: true, skipped: 'disabled' });
+    }
+
+    const finish = async (status, why) => {
+      await recordDecision(opportunityId, { status, service_line, confidence, reason: why || reason });
+      // Only annotate Twenty when the classifier wanted to bid (accept-intent), to avoid
+      // spamming Notes / hitting Twenty's rate limit on routine non-matching skips.
+      if (decision === 'accept') {
+        await applyTwentyAudit(opportunityId, { status, decision, service_line, confidence, reason: why || reason });
+      }
+    };
+
+    // SKIP path — AI judged this NOT a target service (or prefilter rejected it).
+    // Record SKIPPED so it is never re-analyzed (delta), but take ZERO action on HiPages:
+    // the lead stays live for the user to review and DECLINE MANUALLY. The auto-bid flow
+    // never declines — "skip" is an internal bookkeeping mark only.
+    if (decision === 'skip') {
+      await finish('SKIPPED', reason);
+      return res.json({ success: true, decision: 'skip', recorded: 'SKIPPED', hipagesAction: 'none' });
+    }
+
+    // ACCEPT path — guardrails first
+    const minConf = parseFloat(process.env.AUTOBID_MIN_CONFIDENCE || '0');
+    if (minConf > 0 && confidence != null && Number(confidence) < minConf) {
+      await finish('SKIPPED', `low_confidence ${confidence} < ${minConf}`);
+      return res.json({ success: true, skipped: 'low_confidence', confidence });
+    }
+    const maxCredits = parseInt(process.env.AUTOBID_MAX_CREDITS || '0', 10); // 0 = no ceiling
+    if (maxCredits > 0 && parseInt(lead.credits || 0, 10) > maxCredits) {
+      await finish('SKIPPED', `over_ceiling ${lead.credits} > ${maxCredits}`);
+      return res.json({ success: true, skipped: 'over_ceiling', credits: lead.credits });
+    }
+    const dailyCap = parseInt(process.env.AUTOBID_DAILY_CAP || '0', 10); // 0 = no cap
+    if (dailyCap > 0) {
+      const c = await query(`SELECT COUNT(*)::int AS n FROM hipages_leads WHERE auto_bid_status = 'ACCEPTED' AND auto_bid_at::date = CURRENT_DATE`);
+      if (c.rows[0].n >= dailyCap) {
+        await finish('SKIPPED', `daily_cap ${c.rows[0].n} >= ${dailyCap}`);
+        return res.json({ success: true, skipped: 'daily_cap', accepted_today: c.rows[0].n });
+      }
+    }
+
+    // Dry-run — record the would-be accept, never spends credits
+    if (boolEnv('AUTOBID_DRY_RUN', true)) {
+      await finish('SKIPPED', `dry-run: would accept (${service_line || '?'} conf=${confidence != null ? confidence : '?'})`);
+      return res.json({ success: true, dryRun: true, recorded: 'SKIPPED', would: 'accept' });
+    }
+
+    // LIVE accept — fire the Playwright "Accept" on HiPages via the scraper.
+    // HARD GUARANTEE: the auto-bid flow ONLY ever sends action:'accept'. It NEVER declines.
+    // Declining is exclusively a manual/human action via the separate /lead-action route.
+    const scraperUrl = process.env.HIPAGES_SCRAPER_URL || 'http://hipages-scraper:3001';
+    let resp, data;
+    try {
+      resp = await fetch(`${scraperUrl}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ opportunityId, action: 'accept' }), // accept-only by design
+      });
+      data = await resp.json();
+    } catch (err) {
+      // Scraper unreachable — leave lead un-evaluated so n8n can retry later
+      console.error('[hipages] auto-bid scraper unreachable:', err.message);
+      return res.status(503).json({ success: false, error: 'Scraper unreachable', retry: true });
+    }
+    if (resp.status === 429) {
+      // Action server busy — retryable, do not record
+      return res.status(429).json({ success: false, error: data.error || 'busy', retry: true });
+    }
+    if (!resp.ok || !data.success) {
+      // Definitive failure (e.g. lead expired / button gone) — record FAILED so we stop retrying
+      await finish('FAILED', `scraper: ${data.error || resp.status}`);
+      return res.status(502).json({ success: false, error: data.error || 'scraper accept failed' });
+    }
+
+    // Success — the scraper already set hipages_leads.status='ACCEPTED'
+    await finish('ACCEPTED', `accepted (${service_line || '?'} conf=${confidence != null ? confidence : '?'})`);
+    return res.json({ success: true, decision: 'accept', recorded: 'ACCEPTED', scraper: data });
+  } catch (error) {
+    console.error('[hipages] auto-bid decision error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/hipages/lead-action - Accept or decline a HiPages lead via Playwright
+ * Called by Twenty CRM workflow automation (no JWT — uses ACTION_SECRET header instead).
+ * Moved above the authenticateToken middleware: it previously sat below it, so the
+ * Twenty workflow's secret-only calls were rejected with 401 before reaching this handler.
+ */
+router.post('/lead-action', async (req, res) => {
+  if (!checkActionSecret(req, res)) return;
+  try {
+    const { opportunityId, action } = req.body;
+    if (!opportunityId || !['accept', 'decline'].includes(action)) {
+      return res.status(400).json({ success: false, error: 'Required: opportunityId, action (accept|decline)' });
+    }
+
+    const scraperUrl = process.env.HIPAGES_SCRAPER_URL || 'http://hipages-scraper:3001';
+    const response = await fetch(`${scraperUrl}/action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opportunityId, action }),
+    });
+    const data = await response.json();
+    res.status(response.status).json({ success: response.ok, ...data });
+  } catch (error) {
+    console.error('[hipages] Error performing lead action:', error);
+    res.status(503).json({ success: false, error: 'Scraper service unreachable' });
+  }
+});
+
 // Apply authentication to all other hipages routes
 router.use(authenticateToken);
 
@@ -468,20 +868,17 @@ router.post('/leads/:id/promote-opportunity', async (req, res) => {
 
 
 /**
- * POST /api/hipages/scrape/trigger - Manual scrape trigger (admin only)
+ * POST /api/hipages/scrape/trigger - Manually trigger a hipages scrape
  */
 router.post('/scrape/trigger', async (req, res) => {
   try {
-    // For MVP: Return success message
-    // Actual trigger will be implemented via database flag or HTTP call to scraper service in Plan 04
-    res.json({
-      success: true,
-      message: 'Scrape triggered via hipages-scraper service',
-      note: 'Implement database flag or HTTP call to scraper service in Phase 04'
-    });
+    const scraperUrl = process.env.HIPAGES_SCRAPER_URL || 'http://hipages-scraper:3001';
+    const response = await fetch(`${scraperUrl}/trigger`, { method: 'POST' });
+    const data = await response.json();
+    res.status(response.status).json({ success: response.ok, ...data });
   } catch (error) {
     console.error('[hipages] Error triggering scrape:', error);
-    res.status(500).json({ success: false, error: 'Failed to trigger scrape' });
+    res.status(503).json({ success: false, error: 'Scraper service unreachable' });
   }
 });
 

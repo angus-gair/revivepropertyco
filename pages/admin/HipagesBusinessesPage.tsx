@@ -40,7 +40,7 @@ const HipagesBusinessesPage: React.FC = () => {
   const [triggeringScrape, setTriggeringScrape] = useState(false);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
 
-  const token = localStorage.getItem('revive_admin_token');
+  const token = localStorage.getItem('revive_admin_token') || localStorage.getItem('revive_platform_token');
   const hasToken = !!token;
 
   // Socket.IO for real-time updates

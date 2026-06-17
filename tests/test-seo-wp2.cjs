@@ -26,7 +26,7 @@ function check(label, condition) {
 }
 
 // Read built index.html
-const distIndex = path.join(__dirname, 'dist', 'index.html');
+const distIndex = path.join(__dirname, '..', 'dist', 'index.html');
 if (!fs.existsSync(distIndex)) {
   console.error('dist/index.html not found — run npm run build first');
   process.exit(1);
@@ -81,9 +81,9 @@ check('Coordinates present',      html.includes('-35.2802'));
 
 // --- Source files: hooks exist ---
 console.log('\nSource file checks');
-const usePageSEO = path.join(__dirname, 'hooks', 'usePageSEO.ts');
-const seoConfig  = path.join(__dirname, 'seoConfig.ts');
-const seoSchemas = path.join(__dirname, 'components', 'SEOSchemas.tsx');
+const usePageSEO = path.join(__dirname, '..', 'hooks', 'usePageSEO.ts');
+const seoConfig  = path.join(__dirname, '..', 'seoConfig.ts');
+const seoSchemas = path.join(__dirname, '..', 'components', 'SEOSchemas.tsx');
 check('hooks/usePageSEO.ts exists',      fs.existsSync(usePageSEO));
 check('seoConfig.ts exists',            fs.existsSync(seoConfig));
 check('components/SEOSchemas.tsx exists', fs.existsSync(seoSchemas));
@@ -102,7 +102,7 @@ const pages = [
   ['pages/SuccessPage.tsx',            'SEO.success'],
 ];
 for (const [file, seoKey] of pages) {
-  const fp = path.join(__dirname, file);
+  const fp = path.join(__dirname, '..', file);
   if (!fs.existsSync(fp)) { check(`${file} exists`, false); continue; }
   const content = fs.readFileSync(fp, 'utf-8');
   check(`${file} uses ${seoKey}`, content.includes(seoKey));
@@ -118,7 +118,7 @@ const servicePages = [
   'pages/ServiceRubbishRemoval.tsx',
 ];
 for (const file of servicePages) {
-  const fp = path.join(__dirname, file);
+  const fp = path.join(__dirname, '..', file);
   const content = fs.readFileSync(fp, 'utf-8');
   check(`${file} has FAQSchema`,     content.includes('FAQSchema'));
   check(`${file} has ServiceSchema`, content.includes('ServiceSchema'));

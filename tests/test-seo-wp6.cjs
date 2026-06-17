@@ -64,28 +64,28 @@ function main() {
   // --- 1. Task 6.1: Remove CDN Tailwind ---
   console.log('\nTask 6.1: CDN Tailwind Removal');
 
-  const indexHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   check('No CDN Tailwind script', !indexHtml.includes('cdn.tailwindcss.com'));
-  check('Tailwind installed as dev dependency', fs.existsSync(path.join(__dirname, 'node_modules/tailwindcss')));
+  check('Tailwind installed as dev dependency', fs.existsSync(path.join(__dirname, '..', 'node_modules/tailwindcss')));
 
   // --- 2. Task 6.2: Optimise Images ---
   console.log('\nTask 6.2: Image Optimization');
 
-  const angusSize = getFileSizeKB(path.join(__dirname, 'public/angus.jpg'));
-  const familySize = getFileSizeKB(path.join(__dirname, 'public/family.jpg'));
-  const ogImageSize = getFileSizeKB(path.join(__dirname, 'public/og-image.jpg'));
+  const angusSize = getFileSizeKB(path.join(__dirname, '..', 'public/angus.jpg'));
+  const familySize = getFileSizeKB(path.join(__dirname, '..', 'public/family.jpg'));
+  const ogImageSize = getFileSizeKB(path.join(__dirname, '..', 'public/og-image.jpg'));
 
   warn('angus.jpg < 200KB', angusSize && angusSize < 200, `${angusSize?.toFixed(0)}KB`);
   warn('family.jpg < 200KB', familySize && familySize < 200, `${familySize?.toFixed(0)}KB`);
   warn('og-image.jpg < 100KB', ogImageSize && ogImageSize < 100, `${ogImageSize?.toFixed(0)}KB`);
 
   // Check for WebP versions
-  check('angus.webp exists', fs.existsSync(path.join(__dirname, 'public/angus.webp')));
-  check('family.webp exists', fs.existsSync(path.join(__dirname, 'public/family.webp')));
-  check('og-image.webp exists', fs.existsSync(path.join(__dirname, 'public/og-image.webp')));
+  check('angus.webp exists', fs.existsSync(path.join(__dirname, '..', 'public/angus.webp')));
+  check('family.webp exists', fs.existsSync(path.join(__dirname, '..', 'public/family.webp')));
+  check('og-image.webp exists', fs.existsSync(path.join(__dirname, '..', 'public/og-image.webp')));
 
   // Check for lazy loading in pages
-  const landingPage = fs.readFileSync(path.join(__dirname, 'pages/LandingPage.tsx'), 'utf8');
+  const landingPage = fs.readFileSync(path.join(__dirname, '..', 'pages/LandingPage.tsx'), 'utf8');
   check('LandingPage uses lazy loading', landingPage.includes('loading="lazy"'));
 
   // --- 3. Task 6.3: Preload Fonts ---
@@ -97,9 +97,9 @@ function main() {
   // --- 4. Task 6.4: Add Favicon & App Identity ---
   console.log('\nTask 6.4: Favicon & App Identity');
 
-  check('favicon.ico exists and has content', fileExists(path.join(__dirname, 'public/favicon.ico')));
-  check('favicon.svg exists', fs.existsSync(path.join(__dirname, 'public/favicon.svg')));
-  check('apple-touch-icon.png exists', fs.existsSync(path.join(__dirname, 'public/apple-touch-icon.png')));
+  check('favicon.ico exists and has content', fileExists(path.join(__dirname, '..', 'public/favicon.ico')));
+  check('favicon.svg exists', fs.existsSync(path.join(__dirname, '..', 'public/favicon.svg')));
+  check('apple-touch-icon.png exists', fs.existsSync(path.join(__dirname, '..', 'public/apple-touch-icon.png')));
   check('index.html references favicon', indexHtml.includes('favicon'));
 
   // --- 5. Task 6.5: Performance Benchmarks ---
@@ -110,7 +110,7 @@ function main() {
   check('LandingPage hero image has alt', landingPage.includes('alt="Canberra'));
 
   // Check ServicePageTemplate
-  const template = fs.readFileSync(path.join(__dirname, 'components/ServicePageTemplate.tsx'), 'utf8');
+  const template = fs.readFileSync(path.join(__dirname, '..', 'components/ServicePageTemplate.tsx'), 'utf8');
   check('Template accepts imageAlt prop', template.includes('imageAlt'));
   check('Template uses imageAlt for accessibility', template.includes('alt={hero.imageAlt'));
 

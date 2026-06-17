@@ -33,11 +33,11 @@ function main() {
   // --- Task 9.1: Service Areas Page ---
   console.log('\nTask 9.1: Service Areas Page (/service-areas)');
 
-  const serviceAreasPage = fs.existsSync(path.join(__dirname, 'pages/ServiceAreasPage.tsx'));
+  const serviceAreasPage = fs.existsSync(path.join(__dirname, '..', 'pages/ServiceAreasPage.tsx'));
   check('ServiceAreasPage.tsx exists', serviceAreasPage);
 
   if (serviceAreasPage) {
-    const content = fs.readFileSync(path.join(__dirname, 'pages/ServiceAreasPage.tsx'), 'utf8');
+    const content = fs.readFileSync(path.join(__dirname, '..', 'pages/ServiceAreasPage.tsx'), 'utf8');
     check('ServiceAreasPage is a React component', content.includes('React.FC') || content.includes('function'));
     check('ServiceAreasPage has hero section', content.includes('Hero Section'));
     check('ServiceAreasPage lists suburbs', content.includes('Braddon') && content.includes('Kingston') && content.includes('Griffith'));
@@ -48,11 +48,11 @@ function main() {
   // --- Task 9.2: Projects/Case Studies Page ---
   console.log('\nTask 9.2: Projects Page (/projects)');
 
-  const projectsPage = fs.existsSync(path.join(__dirname, 'pages/ProjectsPage.tsx'));
+  const projectsPage = fs.existsSync(path.join(__dirname, '..', 'pages/ProjectsPage.tsx'));
   check('ProjectsPage.tsx exists', projectsPage);
 
   if (projectsPage) {
-    const content = fs.readFileSync(path.join(__dirname, 'pages/ProjectsPage.tsx'), 'utf8');
+    const content = fs.readFileSync(path.join(__dirname, '..', 'pages/ProjectsPage.tsx'), 'utf8');
     check('ProjectsPage is a React component', content.includes('React.FC') || content.includes('function'));
     check('ProjectsPage has project grid', content.includes('projects') || content.includes('Projects'));
     check('ProjectsPage has filter bar', content.includes('Filter') || content.includes('button') && content.includes('All Projects'));
@@ -63,11 +63,11 @@ function main() {
   // --- Task 9.3: Blog/Resources Page ---
   console.log('\nTask 9.3: Blog Page (/blog)');
 
-  const blogPage = fs.existsSync(path.join(__dirname, 'pages/BlogPage.tsx'));
+  const blogPage = fs.existsSync(path.join(__dirname, '..', 'pages/BlogPage.tsx'));
   check('BlogPage.tsx exists', blogPage);
 
   if (blogPage) {
-    const content = fs.readFileSync(path.join(__dirname, 'pages/BlogPage.tsx'), 'utf8');
+    const content = fs.readFileSync(path.join(__dirname, '..', 'pages/BlogPage.tsx'), 'utf8');
     check('BlogPage is a React component', content.includes('React.FC') || content.includes('function'));
     check('BlogPage has blog posts structure', content.includes('blogPosts') || content.includes('posts'));
     check('BlogPage has category filter', content.includes('categories') || content.includes('Category'));
@@ -78,7 +78,7 @@ function main() {
   // --- Task 9.4: Routes configured in App.tsx ---
   console.log('\nTask 9.4: Route Configuration');
 
-  const appTs = fs.readFileSync(path.join(__dirname, 'App.tsx'), 'utf8');
+  const appTs = fs.readFileSync(path.join(__dirname, '..', 'App.tsx'), 'utf8');
   check('App.tsx imports ServiceAreasPage', appTs.includes('ServiceAreasPage'));
   check('App.tsx imports ProjectsPage', appTs.includes('ProjectsPage'));
   check('App.tsx imports BlogPage', appTs.includes('BlogPage'));
@@ -89,7 +89,7 @@ function main() {
   // --- Task 9.5: SEO Config entries ---
   console.log('\nTask 9.5: SEO Configuration');
 
-  const seoConfig = fs.readFileSync(path.join(__dirname, 'seoConfig.ts'), 'utf8');
+  const seoConfig = fs.readFileSync(path.join(__dirname, '..', 'seoConfig.ts'), 'utf8');
   check('SEO config has serviceAreas entry', seoConfig.includes('serviceAreas:'));
   check('SEO config has projects entry', seoConfig.includes('projects:'));
   check('SEO config has blog entry', seoConfig.includes('blog:'));
@@ -97,7 +97,7 @@ function main() {
   // --- Task 9.6: Sitemap includes new pages ---
   console.log('\nTask 9.6: Sitemap');
 
-  const sitemap = fs.readFileSync(path.join(__dirname, 'public/sitemap.xml'), 'utf8');
+  const sitemap = fs.readFileSync(path.join(__dirname, '..', 'public/sitemap.xml'), 'utf8');
   check('sitemap includes /service-areas', sitemap.includes('/service-areas'));
   check('sitemap includes /projects', sitemap.includes('/projects'));
   check('sitemap includes /blog', sitemap.includes('/blog'));
@@ -114,7 +114,7 @@ function main() {
   ];
 
   for (const page of servicePages) {
-    const pageContent = fs.readFileSync(path.join(__dirname, page.file), 'utf8');
+    const pageContent = fs.readFileSync(path.join(__dirname, '..', page.file), 'utf8');
     check(`${page.name} has pricing section`, pageContent.includes('pricing') || pageContent.includes('Pricing'));
     check(`${page.name} has FAQs`, pageContent.includes('faqs') || pageContent.includes('FAQ'));
     check(`${page.name} has CTA`, pageContent.includes('/book') || pageContent.includes('buttonText'));

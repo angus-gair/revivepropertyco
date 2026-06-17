@@ -1,0 +1,162 @@
+{
+  "name": "HiPages Auto-Bid (Riv)",
+  "settings": { "executionOrder": "v1" },
+  "nodes": [
+    {
+      "id": "node-schedule",
+      "name": "Every 5 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300],
+      "parameters": {
+        "rule": { "interval": [ { "field": "minutes", "minutesInterval": 5 } ] }
+      }
+    },
+    {
+      "id": "node-config",
+      "name": "Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// EDIT THESE — then the rest of the workflow needs no changes.\n// actionSecret MUST equal ACTION_SECRET in the Revive backend .env\n// glmKey = your OpenRouter API key (sk-or-v1-...)\n// glmModel = 'openrouter/free' or any slug from https://openrouter.ai/models\nreturn [{ json: {\n  reviveApiBase: 'https://revivepropertyco.au/api/hipages',\n  actionSecret: 'REPLACE_WITH_ACTION_SECRET',\n  glmUrl: 'https://openrouter.ai/api/v1/chat/completions',\n  glmModel: 'openrouter/free',\n  glmKey: 'REPLACE_WITH_OPENROUTER_API_KEY',\n  minConfidence: 0.7\n} }];"
+      }
+    },
+    {
+      "id": "node-candidates",
+      "name": "Get candidates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.reviveApiBase }}/auto-bid/candidates?limit=50",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Action-Secret", "value": "={{ $json.actionSecret }}" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-explode",
+      "name": "Explode leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const body = $input.first().json;\nconst rows = Array.isArray(body.data) ? body.data : [];\nreturn rows.map(r => ({ json: r }));"
+      }
+    },
+    {
+      "id": "node-classify",
+      "name": "Classify + decide",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const cfg = $('Config').first().json;\nconst lead = $json;\nconst hay = `${lead.job_type||''} ${lead.job_subtype||''} ${lead.description||''}`.toLowerCase();\nconst KW = ['pressure','jet wash','jetwash','jet-wash','driveway','patio','paving','path clean','fence clean','soft wash','house wash','exterior clean','exterior wash','roof clean','mould','mold','algae','grout','regrout','re-grout','tile','tiling','epoxy'];\nconst prefilter = KW.some(k => hay.includes(k));\nlet decision = 'skip', service_line = 'none', confidence = 0, reason = 'prefilter: no target keywords';\nif (prefilter) {\n  const sys = \"You are a lead-qualification classifier for Revive Property Co, an Australian property-services business. Revive ONLY wants two job kinds: (1) pressure_washing = exterior / hard-surface cleaning (pressure or jet washing, driveways, paths, patios, paving, fences, house or building exterior wash, soft wash, roof cleaning, mould/algae/grime removal from hard surfaces); (2) regrouting = tile grout work (regrouting, grout repair or restoration, tile and grout cleaning or resealing, shower or bathroom grout, epoxy grout). Everything else (handyman, furniture, gardening, landscaping, plumbing, electrical, painting, waterproofing, installing NEW tiles, building) is none. Respond with ONLY a compact JSON object, no prose and no code fences: {\\\"match\\\": boolean, \\\"service_line\\\": \\\"pressure_washing\\\"|\\\"regrouting\\\"|\\\"none\\\", \\\"confidence\\\": number between 0 and 1, \\\"reason\\\": short string}. Set match true only if service_line is pressure_washing or regrouting.\";\n  const usr = JSON.stringify({ job_type: lead.job_type, job_subtype: lead.job_subtype, description: lead.description, suburb: lead.suburb });\n  let parsed = { match: false, service_line: 'none', confidence: 0, reason: 'no_response' };\n  try {\n    const resp = await this.helpers.httpRequest({\n      method: 'POST', url: cfg.glmUrl,\n      headers: { Authorization: `Bearer ${cfg.glmKey}`, 'Content-Type': 'application/json' },\n      body: { model: cfg.glmModel, temperature: 0, messages: [ { role: 'system', content: sys }, { role: 'user', content: usr } ] },\n      json: true\n    });\n    const content = (resp.choices && resp.choices[0] && resp.choices[0].message && resp.choices[0].message.content) || '{}';\n    const jsonStr = String(content).replace(/```json/gi, '').replace(/```/g, '').trim();\n    try { parsed = JSON.parse(jsonStr); } catch (e) { parsed = { match: false, service_line: 'none', confidence: 0, reason: 'parse_error: ' + String(content).slice(0, 120) }; }\n  } catch (e) {\n    parsed = { match: false, service_line: 'none', confidence: 0, reason: 'glm_error: ' + String(e.message || e).slice(0, 120) };\n  }\n  service_line = parsed.service_line || 'none';\n  confidence = Number(parsed.confidence) || 0;\n  reason = parsed.reason || '';\n  const isMatch = !!parsed.match && (service_line === 'pressure_washing' || service_line === 'regrouting');\n  decision = (isMatch && confidence >= Number(cfg.minConfidence || 0)) ? 'accept' : 'skip';\n}\nreturn { json: { opportunityId: lead.crm_opportunity_id, decision, service_line, confidence, reason, lead_id: lead.lead_id, job_type: lead.job_type, suburb: lead.suburb, credits: lead.credits } };"
+      }
+    },
+    {
+      "id": "node-decision",
+      "name": "Post decision",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.reviveApiBase }}/auto-bid/decision",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Action-Secret", "value": "={{ $('Config').first().json.actionSecret }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ opportunityId: $json.opportunityId, decision: $json.decision, service_line: $json.service_line, confidence: $json.confidence, reason: $json.reason }) }}",
+        "options": {
+          "batching": { "batch": { "batchSize": 1, "batchInterval": 1500 } }
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "node-notify-start",
+      "name": "Notify start",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 500],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.reviveApiBase }}/auto-bid/run/start",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Action-Secret", "value": "={{ $('Config').first().json.actionSecret }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ count: $json.count }) }}",
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "node-collapse",
+      "name": "Collapse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return [{ json: { processed: $input.all().length } }];"
+      }
+    },
+    {
+      "id": "node-notify-complete",
+      "name": "Notify complete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.reviveApiBase }}/auto-bid/run/complete",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Action-Secret", "value": "={{ $('Config').first().json.actionSecret }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ started_at: $('Notify start').first().json.started_at }) }}",
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Every 5 min": { "main": [ [ { "node": "Config", "type": "main", "index": 0 } ] ] },
+    "Config": { "main": [ [ { "node": "Get candidates", "type": "main", "index": 0 } ] ] },
+    "Get candidates": { "main": [ [ { "node": "Explode leads", "type": "main", "index": 0 }, { "node": "Notify start", "type": "main", "index": 0 } ] ] },
+    "Explode leads": { "main": [ [ { "node": "Classify + decide", "type": "main", "index": 0 } ] ] },
+    "Classify + decide": { "main": [ [ { "node": "Post decision", "type": "main", "index": 0 } ] ] },
+    "Post decision": { "main": [ [ { "node": "Collapse", "type": "main", "index": 0 } ] ] },
+    "Collapse": { "main": [ [ { "node": "Notify complete", "type": "main", "index": 0 } ] ] }
+  }
+}

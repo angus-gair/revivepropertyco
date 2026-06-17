@@ -32,7 +32,7 @@ function main() {
 
   // --- 1. Review Page ---
   console.log('\nReview Collection Page');
-  const reviewPage = fs.readFileSync(path.join(__dirname, 'pages/ReviewPage.tsx'), 'utf8');
+  const reviewPage = fs.readFileSync(path.join(__dirname, '..', 'pages/ReviewPage.tsx'), 'utf8');
   check('ReviewPage.tsx exists', true);
   check('ReviewPage imports usePageSEO', reviewPage.includes('usePageSEO'));
   check('ReviewPage uses usePageSEO hook', reviewPage.includes('usePageSEO('));
@@ -44,14 +44,14 @@ function main() {
 
   // --- 2. Route Configuration ---
   console.log('\nRoute Configuration');
-  const appTsx = fs.readFileSync(path.join(__dirname, 'App.tsx'), 'utf8');
+  const appTsx = fs.readFileSync(path.join(__dirname, '..', 'App.tsx'), 'utf8');
   check('App.tsx imports ReviewPage', appTsx.includes("import ReviewPage"));
   check('App.tsx has /review route', appTsx.includes('path="/review"'));
   check('App.tsx ReviewPage element', appTsx.includes('<ReviewPage'));
 
   // --- 3. SEO Config ---
   console.log('\nSEO Configuration');
-  const seoConfig = fs.readFileSync(path.join(__dirname, 'seoConfig.ts'), 'utf8');
+  const seoConfig = fs.readFileSync(path.join(__dirname, '..', 'seoConfig.ts'), 'utf8');
   check('seoConfig has review entry', seoConfig.includes('review:'));
   check('review config has title', seoConfig.match(/review:\s*{[\s\S]*?title:/));
   check('review config has description', seoConfig.match(/review:\s*{[\s\S]*?description:/));
@@ -59,7 +59,7 @@ function main() {
 
   // --- 4. Sitemap ---
   console.log('\nSitemap.xml');
-  const sitemap = fs.readFileSync(path.join(__dirname, 'public/sitemap.xml'), 'utf8');
+  const sitemap = fs.readFileSync(path.join(__dirname, '..', 'public/sitemap.xml'), 'utf8');
   check('sitemap includes /review', sitemap.includes('/review'));
   check('sitemap excludes /admin', !sitemap.includes('/admin'));
   check('sitemap excludes /login', !sitemap.includes('/login'));
@@ -68,7 +68,7 @@ function main() {
 
   // --- 5. LocalBusiness Schema (GBP-aligned) ---
   console.log('\nLocalBusiness Schema (GBP Requirements)');
-  const indexHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   check('has LocalBusiness type', indexHtml.includes('"LocalBusiness"'));
   check('has business name', indexHtml.includes('"name": "Revive Property Co."'));
   check('has URL', indexHtml.includes('"url": "https://revivepropertyco.au"'));
